@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "segmnet"
+version = "0.1.0"
+description = "Kidney tumor/cyst segmentator based on DeepLabV3+ and KiTS23 dataset."
+authors = ["Artemiy Tereshchenko (ARTRSHNK)"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.11.9"
+fastapi = "^0.115.5"
+uvicorn = "^0.32.1"
+torch = "^2.5.1"
+torchvision = "^0.20.1"
+segmentation-models-pytorch = "^0.3.4"
+simpleitk = "^2.4.0"
+pandas = "^2.2.3"
+nibabel = "^5.3.2"
+sqlalchemy = "^2.0.36"
+alembic = "^1.14.0"
+pytest = "^8.3.3"
+pydantic-settings = "^2.6.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+pytest-asyncio = "^0.24.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

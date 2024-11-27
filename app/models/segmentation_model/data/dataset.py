@@ -1,21 +1,12 @@
-# Define basic libs
 from pathlib import Path
-from os.path import splitext, isfile, join, exists
-from os import listdir
+import os
 import logging
 import random
-
-# Define non-torch libs
 import numpy as np
 from PIL import Image
 import pandas as pd
-
-# Define torch-based libs
 import torch
 from torch.utils.data import Dataset
-
-# Define local libs
-...
 
 
 def load_image(filename):
@@ -26,7 +17,7 @@ def load_image(filename):
     :return: _description_
     :rtype: _type_
     """
-    ext = splitext(filename)[1]
+    ext = os.path.splitext(filename)[1]
     if ext == ".npy":
         return Image.fromarray(np.load(filename)).convert("L")
     elif ext in [".pt", ".pth"]:
@@ -83,11 +74,11 @@ class KitsSlicesDataset(Dataset):
 
         # Сбор идентификаторов файлов
         self.raw_ids = [
-            splitext(file)[0]
-            for file in listdir(images_dir)[
-                : int(len(listdir(images_dir)))
+            os.path.splitext(file)[0]
+            for file in os.listdir(images_dir)[
+                : int(len(os.listdir(images_dir)))
             ]
-            if isfile(join(images_dir, file)) and not file.startswith(".")
+            if os.path.isfile(os.path.join(images_dir, file)) and not file.startswith(".")
         ]
 
         if not self.raw_ids:

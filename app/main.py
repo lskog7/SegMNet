@@ -7,7 +7,11 @@ from fastapi import FastAPI
 from app.routers import auth, segmentation, user_settings
 from contextlib import asynccontextmanager
 from app.config import settings
+import logging
 
+
+# Define Logging Basic Config:
+logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
 
 # Define FastAPI itself:
 app = FastAPI()

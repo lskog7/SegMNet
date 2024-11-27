@@ -22,6 +22,7 @@ from app.models.segmentation_model.data import (
     _apply_windowing,
 )
 
+
 # Define logging parameters:
 logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
 
@@ -76,7 +77,9 @@ class Inference:
         ort_inputs = {self.ort_session.get_inputs()[0].name: self.to_numpy(image)}
         return self.ort_session.run(None, ort_inputs)[0].argmax(1).squeeze(0)
 
-    def predict_nifti(self, nifti: torch.Tensor, return_logits:bool=False) -> torch.Tensor:
+    def predict_nifti(
+        self, nifti: torch.Tensor, return_logits: bool = False
+    ) -> torch.Tensor:
         """
         Predicts the output for a given NIFTI tensor.
 
@@ -109,7 +112,7 @@ class Inference:
             return torch.cat(logits_list, dim=0)
         else:
             return torch.cat(predictions_list, dim=0)
-    
+
     def predict_logits_nifti(self, nifti: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
 
@@ -125,7 +128,11 @@ class Inference:
         """
 
         logging.info(f"Loading image from {image_path}")
-        return self.transform(tv._image.Image(_image_totensor(image_path))).unsqueeze(0).contiguous()
+        return (
+            self.transform(tv._image.Image(_image_totensor(image_path)))
+            .unsqueeze(0)
+            .contiguous()
+        )
 
     def load_nifti_img(self, nifti_path: str | Path) -> torch.Tensor:
         """
@@ -139,9 +146,13 @@ class Inference:
         """
 
         logging.info(f"Loading image from NIFTI file: {nifti_path}")
-        return self.transform(
-            _apply_windowing(tv._image.Image(_nifti_totensor(nifti_path)))
-        ).unsqueeze(1).contiguous()
+        return (
+            self.transform(
+                _apply_windowing(tv._image.Image(_nifti_totensor(nifti_path)))
+            )
+            .unsqueeze(1)
+            .contiguous()
+        )
 
     @staticmethod
     def load_nifti_seg(nifti_path: str | Path) -> torch.Tensor:

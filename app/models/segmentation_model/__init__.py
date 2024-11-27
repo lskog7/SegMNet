@@ -1,7 +1,7 @@
 from . import data
-from . import deeplab
+from . import model
 from . import utils
 
-from .deeplab.model import DeepLab
+from .model.model import DeepLab
 
-__all__ = ["data", "deeplab", "utils", "DeepLab"]
+__all__ = ["data", "model", "utils", "DeepLab"]

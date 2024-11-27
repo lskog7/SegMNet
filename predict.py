@@ -10,7 +10,7 @@ import logging
 from pathlib import Path
 
 #   2. Local libraries:
-from app.inference import Inference
+from app.models.segmentation_model.inference import Inference
 from app.model.utils.metrics import dice_score
 
 #   3. Paths (optional):

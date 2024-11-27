@@ -20,6 +20,9 @@ sqlalchemy = "^2.0.36"
 alembic = "^1.14.0"
 pytest = "^8.3.3"
 pydantic-settings = "^2.6.1"
+onnxruntime = "^1.20.1"
+matplotlib = "^3.9.2"
+pytorch-lightning = "^2.4.0"
 
 
 [tool.poetry.group.dev.dependencies]

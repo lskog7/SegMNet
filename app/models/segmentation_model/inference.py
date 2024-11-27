@@ -15,7 +15,7 @@ import onnxruntime
 from tqdm import tqdm
 
 #   2. Local libraries:
-from app.model.data.data import (
+from app.models.segmentation_model.data import (
     _image_totensor,
     _nifti_totensor,
     _get_transform,

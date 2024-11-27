@@ -5,8 +5,8 @@ from . import database
 from . import frontend
 from . import model
 from . import modules
-from . import inference
-from . import export
+from .models.segmentation_model import inference
+from .models.segmentation_model import export_to_onnx
 
 logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
 
@@ -16,6 +16,6 @@ __all__ = [
     "frontend",
     "model",
     "modules",
-    "export",
+    "export_to_onnx",
     "inference",
 ]

@@ -1,21 +1,29 @@
 import logging
 
 from . import constants
+from . import models
+from . import routers
+from . import schemas
+from . import services
+from . import static
+from . import templates
+from . import utils
+from . import config
 from . import database
-from . import frontend
-from . import model
-from . import modules
-from .models.segmentation_model import inference
-from .models.segmentation_model import export_to_onnx
+from . import main
 
 logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
 
 __all__ = [
     "constants",
+    "models",
+    "routers",
+    "schemas",
+    "services",
+    "static",
+    "templates",
+    "utils",
+    "config",
     "database",
-    "frontend",
-    "model",
-    "modules",
-    "export_to_onnx",
-    "inference",
+    "main",
 ]

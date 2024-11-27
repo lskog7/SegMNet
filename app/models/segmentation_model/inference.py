@@ -15,7 +15,7 @@ import onnxruntime
 from tqdm import tqdm
 
 #   2. Local libraries:
-from app.models.segmentation_model.data import (
+from .data import (
     _image_totensor,
     _nifti_totensor,
     _get_transform,
@@ -61,6 +61,7 @@ class Inference:
         )
         self.input_name = self.ort_session.get_inputs()[0].name
         self.transform = _get_transform()
+        self.initialized = True
 
     def predict_image(self, image: torch.Tensor) -> np.ndarray:
         """

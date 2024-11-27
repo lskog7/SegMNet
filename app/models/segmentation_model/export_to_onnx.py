@@ -9,8 +9,7 @@ from pathlib import Path
 import logging
 
 #   2. Local libraries:
-from app.models.segmentation_model import DeepLab
-from app.constants import CHECKPOINT, ONNX_MODEL
+from .model import DeepLab
 
 
 # Define a function to export the model to ONNX:

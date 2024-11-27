@@ -13,6 +13,7 @@ import torchvision.tv_tensors as tv
 import logging
 import onnxruntime
 from tqdm import tqdm
+from pydantic import BaseModel
 
 #   2. Local libraries:
 from .data import (
@@ -21,10 +22,6 @@ from .data import (
     _get_transform,
     _apply_windowing,
 )
-
-
-# Define logging parameters:
-logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
 
 
 # Deine base class for model inference in production:
@@ -62,6 +59,18 @@ class Inference:
         self.input_name = self.ort_session.get_inputs()[0].name
         self.transform = _get_transform()
         self.initialized = True
+        self.name = "SegMNet_v0.1"
+        self.encoder = "efficientnet-b5"
+        self.decoder = "deeplabv3+"
+
+    def __repr__(self) -> str:
+        """
+        The __repr__ method returns a string representation of the Inference object.
+
+        Returns:
+            str: A string representation of the Inference object.
+        """
+        return f"ModelRepresentation(name={self.name}, encoder={self.encoder}, decoder={self.decoder})"
 
     def predict_image(self, image: torch.Tensor) -> np.ndarray:
         """

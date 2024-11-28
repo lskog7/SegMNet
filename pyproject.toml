@@ -23,6 +23,8 @@ pydantic-settings = "^2.6.1"
 onnxruntime = "^1.20.1"
 matplotlib = "^3.9.2"
 pytorch-lightning = "^2.4.0"
+asyncpg = "^0.30.0"
+greenlet = "^3.1.1"
 
 
 [tool.poetry.group.dev.dependencies]

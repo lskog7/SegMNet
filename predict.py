@@ -10,8 +10,8 @@ import logging
 from pathlib import Path
 
 #   2. Local libraries:
-from app.models.segmentation_model.inference import Inference
-from app.model.utils.metrics import dice_score
+from app.models.segmentation_model import Inference
+from app.models.segmentation_model import dice_score
 
 #   3. Paths (optional):
 # from app.constants.constants import TEST_NIFTI_IMG, TEST_NIFTI_SEG, ONNX_MODEL

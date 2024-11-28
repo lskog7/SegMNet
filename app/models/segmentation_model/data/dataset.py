@@ -37,25 +37,18 @@ class KitsSlicesDataset(Dataset):
         split: str = "train",
         random_state: int | None = None,
     ):
-        """_summary_
-
-        :param images_dir: _description_
-        :type images_dir: str
-        :param mask_dir: _description_
-        :type mask_dir: str
-        :param scale: _description_, defaults to 1.0
-        :type scale: float, optional
-        :param mask_suffix: _description_, defaults to ""
-        :type mask_suffix: str, optional
-        :param transform: _description_, defaults to None
-        :type transform: _type_, optional
-        :param split: _description_, defaults to "train"
-        :type split: str, optional
-        :param percent: _description_, defaults to 100
-        :type percent: int, optional
-        :raises RuntimeError: _description_
         """
+        DEPRECATED
 
+        Args:
+            images_dir:
+            mask_dir:
+            scale:
+            mask_suffix:
+            transform:
+            split:
+            random_state:
+        """
         self.images_dir = Path(images_dir)
         self.mask_dir = Path(mask_dir)
         self.scale = scale
@@ -88,7 +81,7 @@ class KitsSlicesDataset(Dataset):
 
         # Фиксация random state
         if self.random_state is not None:
-            torch.random.seed(random_state)
+            torch.random.manual_seed(self.random_state)
 
         # Перемешивание идентификаторов
         random.shuffle(self.raw_ids)
@@ -161,7 +154,16 @@ class Kits23Dataset(Dataset):
         split: str = "train",
         part: float = 1.0,
     ):
+        """
+        Actual Dataset class.
 
+        Args:
+            csv_file (str | Path): Path to a csv file with labels and filepaths.
+            root_dir (str | Path): Path to a directory with images and masks.
+            transform (callable, optional): Optional transform to be applied on a sample. Defaults to None.
+            split (str, optional): Which split to use. Defaults to "train".
+            part (float, optional): Part of the dataset to use. Defaults to 1.0.
+        """
         # Проверка на очевидность
         assert Path(csv_file).exists(), f"{csv_file} does not exist"
         assert Path(root_dir).exists(), f"{root_dir} does not exist"

@@ -13,7 +13,6 @@ import torchvision.tv_tensors as tv
 import logging
 import onnxruntime
 from tqdm import tqdm
-from pydantic import BaseModel
 
 #   2. Local libraries:
 from .data import (
@@ -47,9 +46,6 @@ class Inference:
 
         Attributes:
             onnx_model (str | Path): The path to the ONNX model.
-            ort_session (onnxruntime.InferenceSession): The ONNX model session.
-            input_name (str): The name of the model's input layer.
-            transform (callable): A function for transforming input data.
         """
 
         self.onnx_model = onnx_model
@@ -94,6 +90,7 @@ class Inference:
         Predicts the output for a given NIFTI tensor.
 
         Args:
+            return_logits: (bool, optional): Whether to return logits. Defaults to False.
             nifti (torch.Tensor): A 4-dimensional tensor representing the NIFTI image.
 
         Returns:
@@ -102,10 +99,8 @@ class Inference:
 
         assert nifti.ndim == 4
         logging.info(f"Predicting NIFTI image with shape: {nifti.shape}")
-        if return_logits:
-            logits_list = []
-        else:
-            predictions_list = []
+        logits_list = []
+        predictions_list = []
         for index in tqdm(range(nifti.shape[0])):
             ort_inputs = {
                 self.ort_session.get_inputs()[0].name: self.to_numpy(

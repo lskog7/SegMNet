@@ -25,14 +25,15 @@ def _nifti_totensor(path: str | Path) -> torch.Tensor:
 
 
 def _image_totensor(path: str | Path) -> torch.Tensor:
+    transform = v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
     path = _check_path(path)
     ext = os.path.splitext(path)[1]
     if ext == ".npy":
-        return Image.fromarray(np.load(path)).convert("L")
+        return transform(Image.fromarray(np.load(path)).convert("L"))
     elif ext in [".pt", ".pth"]:
-        return Image.fromarray(torch.load(path, weights_only=True).numpy()).convert("L")
+        return transform(Image.fromarray(torch.load(path, weights_only=True).numpy()).convert("L"))
     else:
-        return Image.open(path).convert("L")
+        return transform(Image.open(path).convert("L"))
 
 
 def _show(img: torch.Tensor):

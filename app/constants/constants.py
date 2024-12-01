@@ -11,6 +11,7 @@ _BASE_PATH_ = Path(__file__).resolve().parents[3] / "external_files"
 # Model weights and checkpoints paths:
 CHECKPOINT = _BASE_PATH_ / "best_deeplabv3plus_mobilenet_v2_100_32_0.01.ckpt"
 ONNX_MODEL = _BASE_PATH_ / "dlv3p_enb5_76e.onnx"
+TMP_PATH = _BASE_PATH_ / ".temp_files"
 
 # Result save path:
 RESULT_PATH = _BASE_PATH_ / "result"

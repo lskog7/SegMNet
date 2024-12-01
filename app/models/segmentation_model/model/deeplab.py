@@ -275,10 +275,10 @@ class DeepLab(L.LightningModule):
         # That is because I add coefficients to losses.
         # Loss consists of three parts and lies in interval [0, 8]:
         loss = (
-            (multiclass_ce_loss + multiclass_dice_loss)  # Multiclass part. Multiplier == 1.15.
-            + (tumor_ce_loss + tumor_dice_loss)  # Tumor part. Multiplier == 1.5.
-            + (cyst_ce_loss + cyst_dice_loss)  # Cyst part. Multiplier == 1.35.
-        )
+            1.0 * (multiclass_ce_loss + multiclass_dice_loss)
+            + 3.0 * (tumor_ce_loss + tumor_dice_loss)
+            + 2.0 * (cyst_ce_loss + cyst_dice_loss)
+        ) / 6.0
 
         # Here is a block of logging code.
         # That is necessary to see the progress of training in tensorboard.
@@ -451,10 +451,10 @@ class DeepLab(L.LightningModule):
         # That is because I add coefficients to losses.
         # Loss consists of three parts and lies in interval [0, 8]:
         loss = (
-            (multiclass_ce_loss + multiclass_dice_loss)
-            + (tumor_ce_loss + tumor_dice_loss)
-            + (cyst_ce_loss + cyst_dice_loss)
-        )
+            1.0 * (multiclass_ce_loss + multiclass_dice_loss)
+            + 3.0 * (tumor_ce_loss + tumor_dice_loss)
+            + 2.0 * (cyst_ce_loss + cyst_dice_loss)
+        ) / 6.0
 
         # Here is a block of logging code.
         # That is necessary to see the progress of training in tensorboard.
@@ -626,10 +626,10 @@ class DeepLab(L.LightningModule):
         # That is because I add coefficients to losses.
         # Loss consists of three parts and lies in interval [0, 8]:
         loss = (
-            (multiclass_ce_loss + multiclass_dice_loss)  # Multiclass part. Multiplier == 1.15.
-            + (tumor_ce_loss + tumor_dice_loss)  # Tumor part. Multiplier == 1.5.
-            + (cyst_ce_loss + cyst_dice_loss)  # Cyst part. Multiplier == 1.35.
-        )
+            1.0 * (multiclass_ce_loss + multiclass_dice_loss)
+            + 3.0 * (tumor_ce_loss + tumor_dice_loss)
+            + 2.0 * (cyst_ce_loss + cyst_dice_loss)
+        ) / 6.0
 
         # Here is a block of logging code.
         # That is necessary to see the progress of training in tensorboard.

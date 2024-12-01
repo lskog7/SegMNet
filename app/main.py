@@ -9,6 +9,8 @@ from contextlib import asynccontextmanager
 from app.config import settings
 import logging
 from app.models.segmentation_model import Inference
+from pathlib import Path
+import nibabel as nib
 from app.constants import ONNX_MODEL, TEST_NIFTI_IMG, TEST_NIFTI_SEG
 
 
@@ -36,3 +38,44 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.get("/login")
+async def login(): ...
+
+
+@app.get("/register")
+async def register(): ...
+
+
+@app.get("/settings")
+async def settings(): ...
+
+
+@app.get("/settings/user")
+async def user_settings(): ...
+
+
+@app.get("/settings/segmentation")
+async def segmentation_settings(): ...
+
+
+@app.post("/segmentation/")
+async def segmentation(file_path: str | Path):
+    x = app.state.model.load_nift_img(file_path)
+    y_pred = app.state.model.predict_nifti(x).detach().cpu().numpy()
+    y_pred.save("")
+
+    output_file = "output.nii.gz"
+    output_nii = nib.Nifti1Image(output_tensor.numpy(), x.affine)
+    nib.save(output_nii, output_file)
+
+    return {"output_file": "file saved"}
+
+
+@app.get("/load")
+async def load(): ...
+
+
+@app.get("/result")
+async def result(): ...

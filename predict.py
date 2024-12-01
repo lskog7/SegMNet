@@ -4,27 +4,17 @@
 
 # First, import the necessary libraries:
 #   1. General libraries:
-import os
 import torch
 import logging
-from pathlib import Path
 
 #   2. Local libraries:
 from app.models.segmentation_model import Inference
 from app.models.segmentation_model import dice_score
-
-#   3. Paths (optional):
-# from app.constants.constants import TEST_NIFTI_IMG, TEST_NIFTI_SEG, ONNX_MODEL
-
-# For GitHub project I do not want to use local paths. 
-# Therefore, I will use the following paths:
-_IMG_NIFTI_PATH_ = Path("external_files/imaging.nii.gz")
-_SEG_NIFTI_PATH_ = Path("external_files/segmentation.nii.gz")
-_ONNX_MODEL_ = Path("external_files/seg_model.onnx")
+from app.constants import TEST_NIFTI_IMG, TEST_NIFTI_SEG, ONNX_MODEL, COLOR_MAP
 
 #------------------------------------------------------------------------------
 # TEST CASE
-size = (1, 1, 512, 512)
+size = (4, 1, 512, 512)
 x = torch.randn(size, device="cpu", requires_grad=False)
 y_true = torch.randint(0, 4, size, device="cpu", requires_grad=False)
 #------------------------------------------------------------------------------
@@ -39,11 +29,11 @@ logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
 #   2. Loading the test NIFTI file to torch.Tensor.
 #   3. Applying transformations to the torch.Tensor.
 #   4. Making predictions.
-inf = Inference(_ONNX_MODEL_) 
+inf = Inference(ONNX_MODEL) 
 
 # Load the target NIFTI image (x) and corresponding segmentation (y_true).
-x = inf.load_nifti_img(_IMG_NIFTI_PATH_) # torch.Tensor [B, 1, 512, 512]
-y_true = inf.load_nifti_seg(_SEG_NIFTI_PATH_) # torch.Tensor [B, 1, 512, 512]
+x = inf.load_nifti_img(TEST_NIFTI_IMG) # torch.Tensor [B, 1, 512, 512]
+y_true = inf.load_nifti_seg(TEST_NIFTI_SEG) # torch.Tensor [B, 1, 512, 512]
 logging.info(f"Unique values in y_true: {torch.unique(y_true)}")
 
 # Predicting segmenation mask (y_pred).
@@ -65,3 +55,23 @@ logging.info(f"Tumor dice score: {tumor_dice}")
 #   3. Cyst dice score.
 cyst_dice = dice_score(logits, y_true, case="cyst")
 logging.info(f"Cyst dice score: {cyst_dice}")
+
+if __name__ == "__main__": 
+    import matplotlib.pyplot as plt
+    
+    target_slices = [idx for idx in range(y_true.shape[0]) if y_true[idx, :, :][y_true[idx, :, :] == 2].long().sum() > 0]
+    logging.info(f"Target slices are: {target_slices}")
+    
+    n = target_slices[len(target_slices) // 2]
+    
+    plt.title(f"GT segmentation. Slice: {n}")
+    plt.imshow(x.detach().cpu().squeeze()[n], cmap='gray')
+    plt.imshow(y_true.detach().cpu().squeeze()[n], cmap=COLOR_MAP, alpha=0.5)
+    plt.axis("off")
+    plt.show()
+
+    plt.title(f"Predicted segmentation. Slice: {n}")
+    plt.imshow(x.detach().cpu().squeeze()[n], cmap='gray')
+    plt.imshow(logits.argmax(1).detach().cpu().squeeze()[n], cmap=COLOR_MAP, alpha=0.5)
+    plt.axis("off")
+    plt.show()

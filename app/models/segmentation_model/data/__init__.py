@@ -1,6 +1,6 @@
 from . import utils
 from . import dataset
-from . import dataloader
+from . import loader
 
 from .dataset import Kits23Dataset
 from .utils import (
@@ -12,8 +12,9 @@ from .utils import (
     _show,
     _Normalize,
     _show_all,
+    _get_base_sizer
 )
-from .dataloader import Loader
+from .loader import Loader
 
 __all__ = [
     "utils",
@@ -27,6 +28,7 @@ __all__ = [
     "_show",
     "_Normalize",
     "_show_all",
-    "dataloader",
-    "Loader"
+    "loader.py",
+    "Loader",
+    "_get_base_sizer"
 ]

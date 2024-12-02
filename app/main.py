@@ -6,19 +6,15 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Union
 import shutil
-import torch
 from contextlib import asynccontextmanager
 import logging
-from pathlib import Path
-import nibabel as nib
 
 # Add locals libs:
-from app.config import settings
 from app.models.segmentation_model import Inference
 from app.constants import ONNX_MODEL, TMP_PATH
 from app.routers.segmentation_router import SegmentationRouter
+from app.services.segmentation_service import DataLoader, SegmentationModel, process_nifti
 
 # Define Logging Basic Config:
 logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
@@ -31,7 +27,7 @@ TMP_PATH.mkdir(parents=True, exist_ok=True)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.info(f"Initializing model from ONNX file: {ONNX_MODEL}")
-    app.state.model = Inference(ONNX_MODEL)
+    app.state.model = SegmentationModel
     logging.info(f"Model loaded: {app.state.model}.")
     yield
     logging.info("Deleting model from memory.")

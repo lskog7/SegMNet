@@ -3,6 +3,7 @@
 # |----------------------------------------------|
 
 # TODO: Comment all the methods.
+# TODO: Add memory control for big 3D images.
 
 # First, import the necessary libraries:
 #   1. General libraries:
@@ -15,11 +16,12 @@ import onnxruntime
 from tqdm import tqdm
 
 #   2. Local libraries:
-from .data import (
+from app.models.segmentation_model.data import (
     _image_totensor,
     _nifti_totensor,
     _get_transform,
     _apply_windowing,
+    _get_base_sizer,
 )
 
 
@@ -49,10 +51,12 @@ class Inference:
         """
 
         self.onnx_model = onnx_model
+        # TODO: Realize try-except above InferenceSession.
         self.ort_session = onnxruntime.InferenceSession(
             self.onnx_model, providers=["CPUExecutionProvider"]
         )
         self.input_name = self.ort_session.get_inputs()[0].name
+        # TODO: Add error checking here also (to _get_transform).
         self.transform = _get_transform()
         self.initialized = True
         self.name = "SegMNet_v0.1"
@@ -132,6 +136,7 @@ class Inference:
             torch.Tensor: A tensor representation of the loaded image.
         """
 
+        # TODO: Add error checking to the whole method and its dependencies.
         logging.info(f"Loading image from {image_path}")
         return (
             self.transform(tv._image.Image(_image_totensor(image_path)))
@@ -150,6 +155,7 @@ class Inference:
             torch.Tensor: A tensor representation of the loaded NIFTI image.
         """
 
+        # TODO: Add error checking to the whole method and its dependencies.
         logging.info(f"Loading image from NIFTI file: {nifti_path}")
         return (
             self.transform(
@@ -194,3 +200,8 @@ class Inference:
             if tensor.requires_grad
             else tensor.cpu().numpy()
         )
+
+    @staticmethod
+    def to_base_size(self, image, base_size):
+        transform = _get_base_sizer(base_size)
+        return transform(image)

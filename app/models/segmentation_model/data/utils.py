@@ -105,6 +105,9 @@ def _get_transform():
         ]
     )
 
+def _get_base_sizer(base_size):
+    return v2.Compose([v2.Resize(base_size, interpolation=v2.InterpolationMode.BICUBIC, antialias=True)])
+
 
 class _Normalize:
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:

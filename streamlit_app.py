@@ -1,32 +1,37 @@
-# |--------------------------------|
-# | STREAMLIT APP FOR SEGMENTATION |
-# |--------------------------------|
-
 import streamlit as st
 import requests
-import os
+from pathlib import Path
 
-from app.constants import TMP_PATH
-from app import APP_HOST, APP_PORT
-
-API_URL = f"http://localhost:{APP_PORT}/segmentation"
+API_URL = "http://localhost:8000/segmentation/upload/"
+TMP_PATH = "./tmp"
 
 st.title("SegMNet: A Kidney Tumor Segmentation Service")
 
-uploaded_file = st.file_uploader("Upload your file", type=["txt", "jpg", "png"])
-if uploaded_file is not None:
+# Форма загрузки файла
+uploaded_file = st.file_uploader("Upload your NIFTI file (.nii, .nii.gz)", type=[".nii", ".nii.gz"])
+if uploaded_file:
     with st.spinner("Uploading and processing..."):
-        # Upload file to FastAPI
-        files = {"file": uploaded_file.getvalue()}
-        response = requests.post(f"{API_URL}/upload/", files=files)
-        result = response.json()
-        st.success("File uploaded and segmentation started!")
-        st.write(f"Result will be saved to: {result['result_path']}")
+        try:
+            # Загрузка файла в FastAPI
+            files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/octet-stream")}
+            response = requests.post(API_URL, files=files)
+            response_data = response.json()
+
+            if response.status_code == 200:
+                st.success("File uploaded successfully!")
+                st.write(f"Segmentation result will be saved to: `{response_data['result_path']}`")
+            else:
+                st.error(f"Error: {response_data.get('error', 'Unknown error occurred')}")
+        except Exception as e:
+            st.error(f"Failed to connect to segmentation service: {e}")
 
 st.markdown("---")
 
-st.header("Download Processed Files")
-if os.path.exists(TMP_PATH):
-    files = os.listdir(TMP_PATH)
-    for file in files:
-        st.markdown(f"- [{file}](file://{os.path.join(TMP_PATH, file)})")
+# Список доступных обработанных файлов
+st.header("Processed Files")
+processed_files = list(Path(TMP_PATH).glob("segmented_*"))
+if processed_files:
+    for file in processed_files:
+        st.markdown(f"- [{file.name}](file://{file.resolve()})")
+else:
+    st.write("No processed files available.")

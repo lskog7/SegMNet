@@ -51,52 +51,11 @@ async def root():
     return {"message": "Welcome to the Kidney Tumor Segmentation App!"}
 
 
-#   2. Segmentation endpoint:
-@app.post("/segmentation")
-async def segment_nifti(file: UploadFile = File(...)):
-    # Check file format:
-    if not file.filename.endswith(".nii.gz"):
-        raise HTTPException(status_code=400, detail="Only .nii.gz files are supported.")
-
-    # Temporary path to save file:
-    temp_file_path = TMP_PATH / file.filename
-
-    try:
-        # Save uploaded file:
-        with temp_file_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        logging.info(f"File {file.filename} has been saved to {temp_file_path}.")
-
-        # Load file to memory:
-        nifti_img = ...
-    except Exception as e:
-        ...
-
-
-@app.get("/login")
-async def login(): ...
-
-
-@app.get("/register")
-async def register(): ...
-
-
-@app.get("/settings")
-async def settings(): ...
-
-
-@app.get("/settings/user")
-async def user_settings(): ...
-
-
-@app.get("/settings/segmentation")
-async def segmentation_settings(): ...
-
-
 APP_HOST = "0.0.0.0"
 APP_PORT = 7777
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host=APP_HOST, port=APP_PORT)
+    # uvicorn app:app --reload --host 0.0.0.0 --port 7777
+    uvicorn.run("app.main:app", host=APP_HOST, port=APP_PORT, reload=True)

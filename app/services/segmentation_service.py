@@ -2,7 +2,6 @@
 # | SEGMENTATION SERVICE DESCRIBES PROCESS LOGIC |
 # |----------------------------------------------|
 
-import time
 import logging
 import nibabel as nib
 from pathlib import Path

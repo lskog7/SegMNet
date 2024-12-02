@@ -88,7 +88,7 @@ class Inference:
         return self.ort_session.run(None, ort_inputs)[0].argmax(1).squeeze(0)
 
     def predict_nifti(
-        self, nifti: torch.Tensor, return_logits: bool = False
+            self, nifti: torch.Tensor, return_logits: bool = False
     ) -> torch.Tensor:
         """
         Predicts the output for a given NIFTI tensor.
@@ -202,6 +202,16 @@ class Inference:
         )
 
     @staticmethod
-    def to_base_size(self, image, base_size):
+    def to_base_size(image, base_size):
+        """
+        Returns 3D NIFTI image to its initial size after segmentation.
+
+        Args:
+            image:
+            base_size:
+
+        Returns:
+
+        """
         transform = _get_base_sizer(base_size)
         return transform(image)

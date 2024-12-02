@@ -14,12 +14,10 @@ TMP_PATH = TMP_PATH
 
 # Title and description
 st.title("SegMNet: A Kidney Tumor Segmentation Service")
-st.markdown(
-    """
+st.markdown("""
     This application allows users to upload **NIFTI files** for kidney tumor segmentation.
     The segmentation process is handled by a FastAPI backend.
-    """
-)
+""")
 
 # File upload section
 uploaded_file = st.file_uploader("Upload your NIFTI file (.nii, .nii.gz)", type=[".nii", ".nii.gz"])
@@ -70,3 +68,45 @@ if os.path.exists(TMP_PATH):
         st.write("No processed files available yet.")
 else:
     st.write("Processing directory not found. Please check your setup.")
+
+# TODO: Add pretty interface:
+# 1. Upload button.
+# 2. Uploaded file list (list of files in TMP_DIR).
+# 3. Segmentation button.
+# 4. List of result files.
+# 5. Window with result files and ability to download them.
+# 6. Possibility to choose one of the downloaded images to segment from the list.
+# 7. When image to segment is selected - window with metadata of this image. (size, name, etc.)
+
+# Display uploaded files
+st.header("Uploaded Files")
+if os.path.exists(TMP_PATH):
+    uploaded_files = list(Path(TMP_PATH).glob("*.nii.gz"))
+    if uploaded_files:
+        selected_file = st.selectbox("Select a file to view metadata:", [file.name for file in uploaded_files])
+        if selected_file:
+            file_path = Path(TMP_PATH) / selected_file
+            file_info = file_path.stat()
+            st.write(f"**File Name:** {selected_file}")
+            st.write(f"**File Size:** {file_info.st_size / (1024 * 1024):.2f} MB")
+            st.write(f"**Last Modified:** {file_info.st_mtime}")
+    else:
+        st.write("No uploaded files available.")
+else:
+    st.write("Upload directory not found. Please check your setup.")
+
+# Segmentation button
+if st.button("Segment Selected File"):
+    if selected_file:
+        with st.spinner("Segmenting selected file..."):
+            process_response = requests.post(
+                f"{API_PROCESS_URL}?filename={selected_file}"
+            )
+            process_data = process_response.json()
+
+            if process_response.status_code == 200:
+                st.success(f"Segmentation completed! Result saved to: {process_data['result_path']}")
+            else:
+                st.error(f"Error: {process_data.get('detail', 'Segmentation failed.')}")
+    else:
+        st.error("Please select a file to segment.")

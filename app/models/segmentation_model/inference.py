@@ -101,7 +101,7 @@ class Inference:
             np.ndarray: The predicted class indices for the NIFTI image.
         """
 
-        assert nifti.ndim == 4
+        assert nifti.ndim == 4, f"nifti shape: {nifti.ndim}, nifti  shape: {nifti.shape}"
         logging.info(f"Predicting NIFTI image with shape: {nifti.shape}")
         logits_list = []
         predictions_list = []

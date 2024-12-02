@@ -8,6 +8,7 @@ from app.services.segmentation_service import process_nifti
 
 SegmentationRouter = APIRouter(prefix="/segmentation", tags=["Segmentation"])
 
+
 @SegmentationRouter.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
     """
@@ -31,6 +32,7 @@ async def upload_file(file: UploadFile = File(...)):
         logging.error(f"Error during file upload: {e}")
         raise HTTPException(status_code=500, detail="File upload failed.")
 
+
 @SegmentationRouter.post("/process/")
 async def process_file(filename: str, background_tasks: BackgroundTasks):
     """
@@ -53,7 +55,6 @@ async def process_file(filename: str, background_tasks: BackgroundTasks):
     except Exception as e:
         logging.error(f"Error during segmentation: {e}")
         raise HTTPException(status_code=500, detail="Segmentation process failed.")
-
 
 
 @SegmentationRouter.get("/download/{filename}")

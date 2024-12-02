@@ -20,6 +20,8 @@ def process_nifti(input_path: str | Path, output_path: str | Path) -> np.ndarray
     try:
         # Load file from the input path:
         nifti_image, affine = DataLoader.load_nifti(input_path)
+        base_size = nifti_image.shape[1:]
+        logging.info(f"nifti image base shape: {nifti_image.shape}")
 
         if len(nifti_image) == 0 or len(affine) == 0:
             raise ValueError(f"Zero size of nifti image or its affine:\n"
@@ -28,15 +30,17 @@ def process_nifti(input_path: str | Path, output_path: str | Path) -> np.ndarray
 
         # Preprocess input file:
         #   1. Convert 3D CT image to torch.Tensor and save size:
-        nifti_tensor = DataLoader.convert_to_tensor(nifti_image)
-        base_size = nifti_tensor.shape[0]
+        nifti_tensor = DataLoader.convert_to_tensor(np.transpose(nifti_image, (1,2,0)))
+        logging.info(f"nifti_tensor shape: {nifti_tensor.shape}")
         #   2. Apply windowing:
         nifti_tensor_w = DataLoader.apply_windowing(nifti_tensor)
+        logging.info(f"nifti_tensor_w shape: {nifti_tensor_w.shape}")
         #   3. Apply train-like transformations (normalizations):
         nifti_tensor_wn = DataLoader.transform(nifti_tensor_w)
+        logging.info(f"nifti_tensor_wn shape: {nifti_tensor_wn.shape}")
 
         # Do segmentation:
-        segmentation = SegmentationModel.predict_nifti(nifti_tensor_wn).detach().cpu()
+        segmentation = SegmentationModel.predict_nifti(nifti_tensor_wn.unsqueeze(1)).detach().cpu()
 
         # TODO: Check this function, I think it can work not as I expect.
         # Return to initial (base) size:
@@ -46,7 +50,7 @@ def process_nifti(input_path: str | Path, output_path: str | Path) -> np.ndarray
             raise ValueError("Mismatch between input and output shape in segmentation!")
 
         # Save the result to TMP_PATH:
-        nib.save(nib.Nifti1Image(segmentation, affine), str(output_path))
+        nib.save(nib.Nifti1Image(segmentation.numpy().astype(np.float32), affine), str(output_path))
 
         # Return the result
         return segmentation

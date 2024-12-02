@@ -45,7 +45,7 @@ class Loader:
             affine
         """
         nifti_path = _check_path(nifti_path)
-        if nifti_path.suffix.lower() == ".nii.gz":
+        if ".nii" in nifti_path.suffixes:
             try:
                 nifti = nib.load(nifti_path)
             except FileNotFoundError:
@@ -54,8 +54,9 @@ class Loader:
             except Exception as e:
                 logging.error(f"Unexpected error while loading NIFTI: {e}")
                 raise ValueError("Failed to load NIFTI file")
-            file_info = {"shape": nifti.get_data_shape(),
-                         "dtype": nifti.get_data_dtype(),
+
+            file_info = {"shape": nifti.header.get_data_shape(),
+                         "dtype": nifti.header.get_data_dtype(),
                          "affine": nifti.affine}
             self.affine_dict[str(nifti_path.name)] = file_info
             return nifti.get_fdata(), nifti.affine

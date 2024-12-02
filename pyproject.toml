@@ -26,6 +26,8 @@ pytorch-lightning = "^2.4.0"
 asyncpg = "^0.30.0"
 greenlet = "^3.1.1"
 onnx = "^1.17.0"
+streamlit = "^1.40.2"
+watchdog = "^6.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

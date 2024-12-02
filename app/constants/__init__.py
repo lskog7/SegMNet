@@ -1,7 +1,7 @@
 from . import constants
 from . import enums
 
-from .constants import CHECKPOINT, ONNX_MODEL, TEST_NIFTI_IMG, TEST_NIFTI_SEG, COLOR_MAP, TMP_PATH
+from .constants import CHECKPOINT, ONNX_MODEL, TEST_NIFTI_IMG, TEST_NIFTI_SEG, COLOR_MAP, TMP_PATH, RESULT_PATH
 from .enums import UserGenderEnum, UserRoleEnum
 
 __all__ = [
@@ -14,5 +14,6 @@ __all__ = [
     "UserGenderEnum",
     "UserRoleEnum",
     "enums",
-    "TMP_PATH"
+    "TMP_PATH",
+    "RESULT_PATH"
 ]

@@ -1,11 +1,11 @@
 # |-----------------------|
 # | MAIN FASTAPI APP FILE |
 # |-----------------------|
-import tempfile
 
 # Import libraries:
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from typing import Union
 import shutil
 import torch
@@ -14,12 +14,17 @@ import logging
 from pathlib import Path
 import nibabel as nib
 
+# Add locals libs:
 from app.config import settings
 from app.models.segmentation_model import Inference
 from app.constants import ONNX_MODEL, TMP_PATH
+from app.routers.segmentation_router import SegmentationRouter
 
 # Define Logging Basic Config:
 logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
+
+# Create (or not) TMP_PATH:
+TMP_PATH.mkdir(parents=True, exist_ok=True)
 
 
 # Define FastAPI functions:
@@ -34,17 +39,21 @@ async def lifespan(app: FastAPI):
 
 
 # Define FastAPI itself:
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(title="Kidney Tumor Segmentation App (SegMNet)", lifespan=lifespan)
 
-# Create (or not) TMP_PATH:
-TMP_PATH.mkdir(parents=True, exist_ok=True)
+# Add middleware:
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# Add routers:
+app.include_router(SegmentationRouter)
 
 
 # Define endpoints:
 #   1. Root endpoint for the project (same main page):
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Welcome to the Kidney Tumor Segmentation App!"}
+
 
 #   2. Segmentation endpoint:
 @app.post("/segmentation")
@@ -67,6 +76,7 @@ async def segment_nifti(file: UploadFile = File(...)):
     except Exception as e:
         ...
 
+
 @app.get("/login")
 async def login(): ...
 
@@ -86,9 +96,11 @@ async def user_settings(): ...
 @app.get("/settings/segmentation")
 async def segmentation_settings(): ...
 
-@app.get("/load")
-async def load(): ...
 
+APP_HOST = "0.0.0.0"
+APP_PORT = 7777
 
-@app.get("/result")
-async def result(): ...
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host=APP_HOST, port=APP_PORT)

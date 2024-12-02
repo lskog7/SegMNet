@@ -12,6 +12,8 @@ from . import config
 from . import database
 from . import main
 
+from .main import APP_HOST, APP_PORT
+
 logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
 
 __all__ = [
@@ -26,4 +28,6 @@ __all__ = [
     "config",
     "database",
     "main",
+    "APP_HOST",
+    "APP_PORT"
 ]

@@ -21,6 +21,7 @@ class Loader:
     def __init__(self, tmp_path: str | Path = TMP_PATH):
         self.tmp_path = tmp_path
         self.tensor_fn = v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+        self.transform = _get_transform()
         self.windowing_fn = _apply_windowing
         self.affine_dict = {}
 
@@ -56,5 +57,28 @@ class Loader:
         return self.tensor_fn(image)
 
     def apply_windowing(self, nifti: torch.Tensor) -> torch.Tensor:
+        """
+        Applies special windowing to CT image. Allows to see kidneys much better.
+        Use only after transformation to torch.Tensor.
+
+        Args:
+            nifti:
+
+        Returns:
+
+        """
         assert nifti.ndim == 3, f"NIFTI file must be 3D dimensions, got {nifti.ndim}"
         return self.windowing_fn(nifti)
+
+    def preporcess(self, image: torch.Tensor) -> torch.Tensor:
+        """
+        Makes image similar to training data.
+        Use only after transformation to torch.Tensor and windowing.
+
+        Args:
+            image:
+
+        Returns:
+
+        """
+        return self.transform(image)

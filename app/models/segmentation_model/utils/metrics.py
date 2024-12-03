@@ -4,11 +4,10 @@
 
 # First, import the necessary libraries:
 import torch
-from segmentation_models_pytorch.metrics.functional import iou_score
 from segmentation_models_pytorch.losses import DiceLoss, BINARY_MODE, MULTICLASS_MODE
 
-# Define loss_fn class for aesy access in future:
-#   1. Multiclsas DiceLoss.
+# Define loss_fn class for easy access in the future:
+#   1. Multiclass DiceLoss.
 #       - MULTICLASS_MODE.
 #       - log_loss=False - values in range [0, 1].
 #       - from_logits=False - for easy access.

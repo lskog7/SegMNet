@@ -3,6 +3,7 @@
 # |----------------------------------------------|
 
 # TODO: Comment all the methods.
+# TODO: Add memory control for big 3D images.
 
 # First, import the necessary libraries:
 #   1. General libraries:
@@ -15,15 +16,13 @@ import onnxruntime
 from tqdm import tqdm
 
 #   2. Local libraries:
-from app.model.data.data import (
+from app.models.segmentation_model.data import (
     _image_totensor,
     _nifti_totensor,
     _get_transform,
     _apply_windowing,
+    _get_base_sizer,
 )
-
-# Define logging parameters:
-logging.basicConfig(level=logging.INFO, format="CONSOLE: %(message)s")
 
 
 # Deine base class for model inference in production:
@@ -49,17 +48,29 @@ class Inference:
 
         Attributes:
             onnx_model (str | Path): The path to the ONNX model.
-            ort_session (onnxruntime.InferenceSession): The ONNX model session.
-            input_name (str): The name of the model's input layer.
-            transform (callable): A function for transforming input data.
         """
 
         self.onnx_model = onnx_model
+        # TODO: Realize try-except above InferenceSession.
         self.ort_session = onnxruntime.InferenceSession(
             self.onnx_model, providers=["CPUExecutionProvider"]
         )
         self.input_name = self.ort_session.get_inputs()[0].name
+        # TODO: Add error checking here also (to _get_transform).
         self.transform = _get_transform()
+        self.initialized = True
+        self.name = "SegMNet_v0.1"
+        self.encoder = "efficientnet-b5"
+        self.decoder = "deeplabv3+"
+
+    def __repr__(self) -> str:
+        """
+        The __repr__ method returns a string representation of the Inference object.
+
+        Returns:
+            str: A string representation of the Inference object.
+        """
+        return f"ModelRepresentation(name={self.name}, encoder={self.encoder}, decoder={self.decoder})"
 
     def predict_image(self, image: torch.Tensor) -> np.ndarray:
         """
@@ -76,23 +87,24 @@ class Inference:
         ort_inputs = {self.ort_session.get_inputs()[0].name: self.to_numpy(image)}
         return self.ort_session.run(None, ort_inputs)[0].argmax(1).squeeze(0)
 
-    def predict_nifti(self, nifti: torch.Tensor, return_logits:bool=False) -> torch.Tensor:
+    def predict_nifti(
+            self, nifti: torch.Tensor, return_logits: bool = False
+    ) -> torch.Tensor:
         """
         Predicts the output for a given NIFTI tensor.
 
         Args:
+            return_logits: (bool, optional): Whether to return logits. Defaults to False.
             nifti (torch.Tensor): A 4-dimensional tensor representing the NIFTI image.
 
         Returns:
             np.ndarray: The predicted class indices for the NIFTI image.
         """
 
-        assert nifti.ndim == 4
+        assert nifti.ndim == 4, f"nifti shape: {nifti.ndim}, nifti  shape: {nifti.shape}"
         logging.info(f"Predicting NIFTI image with shape: {nifti.shape}")
-        if return_logits:
-            logits_list = []
-        else:
-            predictions_list = []
+        logits_list = []
+        predictions_list = []
         for index in tqdm(range(nifti.shape[0])):
             ort_inputs = {
                 self.ort_session.get_inputs()[0].name: self.to_numpy(
@@ -109,7 +121,7 @@ class Inference:
             return torch.cat(logits_list, dim=0)
         else:
             return torch.cat(predictions_list, dim=0)
-    
+
     def predict_logits_nifti(self, nifti: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
 
@@ -124,8 +136,13 @@ class Inference:
             torch.Tensor: A tensor representation of the loaded image.
         """
 
+        # TODO: Add error checking to the whole method and its dependencies.
         logging.info(f"Loading image from {image_path}")
-        return self.transform(tv._image.Image(_image_totensor(image_path))).unsqueeze(0).contiguous()
+        return (
+            self.transform(tv._image.Image(_image_totensor(image_path)))
+            .unsqueeze(0)
+            .contiguous()
+        )
 
     def load_nifti_img(self, nifti_path: str | Path) -> torch.Tensor:
         """
@@ -138,10 +155,15 @@ class Inference:
             torch.Tensor: A tensor representation of the loaded NIFTI image.
         """
 
+        # TODO: Add error checking to the whole method and its dependencies.
         logging.info(f"Loading image from NIFTI file: {nifti_path}")
-        return self.transform(
-            _apply_windowing(tv._image.Image(_nifti_totensor(nifti_path)))
-        ).unsqueeze(1).contiguous()
+        return (
+            self.transform(
+                _apply_windowing(tv._image.Image(_nifti_totensor(nifti_path)))
+            )
+            .unsqueeze(1)
+            .contiguous()
+        )
 
     @staticmethod
     def load_nifti_seg(nifti_path: str | Path) -> torch.Tensor:
@@ -178,3 +200,18 @@ class Inference:
             if tensor.requires_grad
             else tensor.cpu().numpy()
         )
+
+    @staticmethod
+    def to_base_size(image, base_size):
+        """
+        Returns 3D NIFTI image to its initial size after segmentation.
+
+        Args:
+            image:
+            base_size:
+
+        Returns:
+
+        """
+        transform = _get_base_sizer(base_size)
+        return transform(image)

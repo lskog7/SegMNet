@@ -6,13 +6,23 @@
 from pathlib import Path
 from matplotlib.colors import ListedColormap
 
+_BASE_PATH_ = Path(__file__).resolve().parents[3]
+
 # Model weights and checkpoints paths:
-CHECKPOINT = Path("external_files/best_deeplabv3plus_mobilenet_v2_100_32_0.01.ckpt")
-ONNX_MODEL = Path("external_files/seg_model.onnx")
+CHECKPOINT = _BASE_PATH_ / "external_files" / "best_deeplabv3plus_mobilenet_v2_100_32_0.01.ckpt"
+ONNX_MODEL = _BASE_PATH_ / "external_files" / "dlv3p_enb5_76e.onnx"
+TMP_PATH = _BASE_PATH_ / ".app_tmp"
+
+# Result save path:
+RESULT_PATH = TMP_PATH / "result"
 
 # Test and example cases paths:
-TEST_NIFTI_IMG = Path("external_files/imaging20.nii.gz")
-TEST_NIFTI_SEG = Path("external_files/segmentation20.nii.gz")
+TEST_NIFTI_IMG = _BASE_PATH_ / "external_files" / "imaging.nii.gz"
+TEST_NIFTI_SEG = _BASE_PATH_ / "external_files" / "segmentation.nii.gz"
 
 # Useful utilities:
 COLOR_MAP = ListedColormap(["black", "green", "red", "magenta"])
+
+
+if __name__ == "__main__":
+    print(_BASE_PATH_)

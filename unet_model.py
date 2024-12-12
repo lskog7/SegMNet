@@ -1,23 +1,18 @@
-# |------------------------------------------------------------------------|
-# | BASE CLASS FOR DEEPLABV3+ SEGMENTATION MODEL WITH MOBILENET V2 ENCODER |
-# |------------------------------------------------------------------------|
+# |-----------------------------------------------------------------------|
+# | BASE CLASS FOR UNET++ SEGMENTATION MODEL WITH EFFICIENTNET-B0 ENCODER |
+# |-----------------------------------------------------------------------|
 
 # |------------------------------------------------------------------|
 # | Description:                                                     |
-# |   - This is the base class for DeepLabV3Plus segmentation model. |
-# |   - It is used mostly for training and evaluation.               |
-# |   - It is not intended to be used for inference.                 |
-# |   - For inference code, please, visit "app" section.             |
 # |------------------------------------------------------------------|
-# | Author: ARTSHNK                                                  |
+# | Author: Artemiy Tereshchenko                                     |
 # |------------------------------------------------------------------|
 
-# Import necessary libraries:
-#   - I am using pytorch-lightning for training and evaluation and segmentation-models-pytorch as base library.
+# Libraries:
 import torch
 from typing import Optional
 import pytorch_lightning as L
-from segmentation_models_pytorch import DeepLabV3Plus
+from segmentation_models_pytorch import UnetPlusPlus
 from segmentation_models_pytorch.losses import (
     DiceLoss,
     MULTICLASS_MODE,
@@ -26,51 +21,57 @@ from segmentation_models_pytorch.losses import (
     SoftCrossEntropyLoss,
 )
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import OneCycleLR
+from torch.optim.lr_scheduler import OneCycleLR, ReduceLROnPlateau
+from typing import List
+import logging
 
+# Local modules:
+...
 
-class DeepLab(L.LightningModule):
-    """
-    DeepLabV3Plus model for semantic segmentation.
+# Module-specific logging template:
+logging.basicConfig(level=logging.INFO, format="MODULE->[unet_model.py]: %(message)s")
 
-    Args:
-        encoder_name (str): Name of the encoder to be used in the model.
-        encoder_depth (int): Depth of the encoder.
-        encoder_weights (str): Pre-trained weights for the encoder.
-        encoder_output_stride (int): Output stride of the encoder.
-        decoder_channels (int): Number of channels in the decoder.
-        decoder_atrous_rates (tuple): Atrous rates for the decoder.
-        in_channels (int): Number of input channels.
-        classes (int): Number of classes in the output.
-        activation (str): Activation function to be used.
-        upsampling (int): Upsampling factor for the output.
-        aux_params (dict): Additional parameters for auxiliary tasks.
-        lr (float): Learning rate for the optimizer.
-        smooth (float): Smooth factor for loss functions.
-        eps (float): Epsilon value for Dice Loss.
-    """
-
+class UNet(L.LightningModule):
     # I do not recommend to change any default values.
     # They are used for loading model from checkpoint and can lead to unexpected errors.
-    # Generally, I already tuned these parameters and left them changeable just not to rewrite code.
+    # Generally, I already tuned these parameters and left them changable just not to rewrite code.
     def __init__(
         self,
-        encoder_name: str = "efficientnet-b5", # Can be: {"mobilenet_v2": "2M", "efficientnet-b5": "28M"}
+        encoder_name: str = "efficientnet-b0",  # Can be: {"mobilenet_v2": "2M", "efficientnet-b5": "28M"}
         encoder_depth: int = 5,
         encoder_weights: Optional[str] = "imagenet",
-        encoder_output_stride: int = 16,
-        decoder_channels: int = 256,
-        decoder_atrous_rates: tuple = (12, 24, 36),
+        decoder_channels: List[int] = (256, 128, 64, 32, 16),
+        decoder_use_batchnorm: bool = True, # True, False, "inplace"
+        decoder_attention_type: str | None = None, # None or "scse"
         in_channels: int = 1,
         classes: int = 4,
         activation: Optional[str] = None,
-        upsampling: int = 4,
         aux_params: Optional[dict] = None,
-        lr: float = 0.1,
+        lr: float = 1e-06,
         smooth: float = 1e-06,
         eps: float = 1e-06,
     ):
         super().__init__()
+        """
+            Unet model for semantic segmentation.
+
+            Args:
+                encoder_name (str): Name of the encoder to be used in the model.
+                encoder_depth (int): Depth of the encoder.
+                encoder_weights (str): Pre-trained weights for the encoder.
+                encoder_output_stride (int): Output stride of the encoder.
+                decoder_channels (int): Number of channels in the decoder.
+                decoder_atrous_rates (tuple): Atrous rates for the decoder.
+                in_channels (int): Number of input channels.
+                classes (int): Number of classes in the output.
+                activation (str): Activation function to be used.
+                upsampling (int): Upsampling factor for the output.
+                aux_params (dict): Additional parameters for auxiliary tasks.
+                lr (float): Learning rate for the optimizer.
+                smooth (float): Smooth factor for loss functions.
+                eps (float): Epsilon value for Dice Loss.
+                out_threshold (float): Threshold value for binary classification.
+            """
 
         # |-----------------------------------|
         # | DEFINITIONS OF INTERNAL VARIABLES |
@@ -83,41 +84,37 @@ class DeepLab(L.LightningModule):
         self.encoder_name = encoder_name
         self.encoder_depth = encoder_depth
         self.encoder_weights = encoder_weights
-        self.encoder_output_stride = encoder_output_stride
+        self.decoder_use_batchnorm = decoder_use_batchnorm
         self.decoder_channels = decoder_channels
-        self.decoder_atrous_rates = decoder_atrous_rates
+        self.decoder_attention_type = decoder_attention_type
         self.in_channels = in_channels
         self.classes = classes
         self.activation = activation
-        self.upsampling = upsampling
         self.aux_params = aux_params
         self.learning_rate = lr
         self.smooth = smooth
         self.epsilon = eps
-        self.optimizer = None
-        self.lr_scheduler = None
 
         # Define DeepLabV3 model itself.
         # I use models from SMP.
-        self.model = DeepLabV3Plus(
+        self.model = UnetPlusPlus(
             encoder_name=self.encoder_name,
             encoder_depth=self.encoder_depth,
             encoder_weights=self.encoder_weights,
-            encoder_output_stride=self.encoder_output_stride,
+            decoder_use_batchnorm=self.decoder_use_batchnorm,
             decoder_channels=self.decoder_channels,
-            decoder_atrous_rates=self.decoder_atrous_rates,
+            decoder_attention_type=self.decoder_attention_type,
             in_channels=self.in_channels,
             classes=self.classes,
             activation=self.activation,
-            upsampling=self.upsampling,
             aux_params=self.aux_params,
         )
 
         # A friendly reminder.
-        # Loss multiclass mode suppose you are solving multi-class segmentation task. That mean you have C = 1...N classes which have unique label values, classes are mutually exclusive and all pixels are labeled with these values. Target mask shape - (B, H, W), model output mask shape (B, C, H, W).
+        # Loss multiclass mode suppose you are solving multi-class segmentation task. That mean you have C = 1..N classes which have unique label values, classes are mutually exclusive and all pixels are labeled with theese values. Target mask shape - (B, H, W), model output mask shape (B, C, H, W).
 
         # Define loss functions:
-        # First, multiclass DiceLoss for general case with 4 classes.
+        # First, multicalss DiceLoss for general case with 4 classes.
         # y_pred - torch.Tensor of shape (B, C, H, W)
         # y_true - torch.Tensor of shape (B, H, W) or (B, C, H, W)
         self.multiclass_dice_loss_fn = DiceLoss(
@@ -128,7 +125,7 @@ class DeepLab(L.LightningModule):
             eps=self.epsilon,  # Same.
         )
 
-        # Second, binary DiceLoss for tumor and cyst segmentation task.
+        # Second, binary DiceLoss for tumor and cyst segmneation task.
         # Got to add this, because in other case, there will be no good tumor predictions.
         # y_pred - torch.Tensor of shape (B, C, H, W)
         # y_true - torch.Tensor of shape (B, H, W) or (B, C, H, W)
@@ -140,7 +137,7 @@ class DeepLab(L.LightningModule):
             eps=self.epsilon,  # Same.
         )
 
-        # Third, CrossEntropyLoss for multiclass segmentation.
+        # Third, CrossEnthropyLoss for multiclass segmentation.
         # It is broadly used in medical image segmentation.
         # y_pred - torch.Tensor of shape (B, C, H, W)
         # y_true - torch.Tensor of shape (B, H, W)
@@ -149,7 +146,7 @@ class DeepLab(L.LightningModule):
             reduction="mean",  # I want loss to be in [0, 1] range.
         )
 
-        # Fourth, BinaryCrossEntropyLoss for binary segmentation.
+        # Fourth, BinaryCrossEnthropyLoss for binary segmentation.
         # Also for better tumor and cyst segmentation.
         # y_pred - torch.Tensor of shape (B, C, H, W)
         # y_true - torch.Tensor of shape (B, H, W) or (B, 1 ,H, W)
@@ -163,7 +160,7 @@ class DeepLab(L.LightningModule):
     # |-----------------------------------------------|
 
     # First step, define a forward pass. Just to use self.model(x) in future.
-    # Also, I define types of inputs and outputs where it is possible.
+    # Also, i define types of inputs and outputs where it is possible.
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass through the model."""
         return self.model(x)
@@ -176,20 +173,23 @@ class DeepLab(L.LightningModule):
 
         # For the scheduler I use OneCycleLR.
         # It has nice LR curve and it is easy to use.
-        self.lr_scheduler = OneCycleLR(
-            self.optimizer,
-            max_lr=self.learning_rate,
-            total_steps=self.trainer.estimated_stepping_batches,  # Just do not forget to define the total number of steps.
-            div_factor=25,  # Initial LR is self.learning_rate / div_factor.
-            final_div_factor=10000,  # Final LR is self.learning_rate / final_div_factor.
-        )
+        # self.lr_scheduler = OneCycleLR(
+        #     self.optimizer,
+        #     max_lr=self.learning_rate,
+        #     total_steps=self.trainer.estimated_stepping_batches,  # Just do not forget to define the total number of steps.
+        #     div_factor=25,  # Initial LR is self.learning_rate / div_factor.
+        #     final_div_factor=10000,  # Final LR is self.learning_rate / final_div_factor.
+        # )
+        self.lr_scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.75, patience=10, min_lr=1e-07)
 
         # Do not change the form of the dictionary.
         # It can cause errors and they are very time-consuming.
-        return {
-            "optimizer": self.optimizer,
-            "lr_scheduler": {"scheduler": self.lr_scheduler, "interval": "step"},
-        }
+        # return {
+        #     "optimizer": self.optimizer,
+        #     "lr_scheduler": {"scheduler": self.lr_scheduler, "interval": "step"},
+        # }
+        return {"optimizer": self.optimizer,
+                "lr_scheduler": {"scheduler": self.lr_scheduler, "monitor":"val_loss"}}
 
     # Now, begin training operations themselves.
     # First, define a training step.
@@ -222,7 +222,7 @@ class DeepLab(L.LightningModule):
             h == 512 and w == 512
         ), f"Assertion: Height and width of an image must both be 512."
 
-        # Calculate logits with forward pass.
+        # Calcuate logits with forward pass.
         # And also calculate the prediction itself.
         logits = self(x)  # [B, 4, 512, 512] -> [B, 4, 512, 512]
         # y_pred = logits.argmax(dim=1)  # [B, 4, 512, 512] -> [B, 1, 512, 512]
@@ -238,7 +238,7 @@ class DeepLab(L.LightningModule):
 
         # Calculate all losses:
         #   1. Multiclass CE.
-        #   2. Multiclass DiceLoss.
+        #   2. Multicalss DiceLoss.
         #   3. Binary CE for tumors (label == 2).
         #   4. Binary DiceLoss for tumors (label == 2).
         #   5. Binary CE for cysts (label == 3).
@@ -252,15 +252,12 @@ class DeepLab(L.LightningModule):
         #   - To choose tumor part:
         #       1. Choose y_true where it is 2.
         #       2. Choose the second layer of logits.
-        # I do those transforms explicitly. They do not consume much memory.
-        tumor_mask = y_true.where(y_true == 2, torch.tensor(1, dtype=torch.long), torch.tensor(0, dtype=torch.long))
-        cyst_mask = y_true.where(y_true == 3, torch.tensor(1, dtype=torch.long), torch.tensor(0, dtype=torch.long))
-        # The old and less "torch-like" way of doing this is:
-        # tumor_mask = (y_true == 2).long()  # [B, 1, 512, 512]
-        # cyst_mask = (y_true == 3).long()  # [B, 1, 512, 512]
+        # I do those transforms explicitly. The do not consume much memory.
+        tumor_mask = (y_true == 2).long()  # [B, 1, 512, 512]
+        cyst_mask = (y_true == 3).long()  # [B, 1, 512, 512]
 
         # Here you need to use x.unsqueeze(1) to add a dimension.
-        # This it because loss functions need predictions to have shape of [B, C, H, W].
+        # This it beacause loss functions need predictions to have shape of [B, C, H, W].
         tumor_logits = logits[:, 2, :, :].unsqueeze(1)  # [B, 1, 512, 512]
         cyst_logits = logits[:, 3, :, :].unsqueeze(1)  # [B, 1, 512, 512]
 
@@ -272,13 +269,13 @@ class DeepLab(L.LightningModule):
 
         # Calculate total loss for this step.
         # To be honest, I want my loss to be in range [0, 1]. But in this case, I do not do this.
-        # That is because I add coefficients to losses.
+        # That is beacause I add coeeficients to losses.
         # Loss consists of three parts and lies in interval [0, 8]:
         loss = (
-            1.0 * (multiclass_ce_loss + multiclass_dice_loss)
-            + 3.0 * (tumor_ce_loss + tumor_dice_loss)
-            + 2.0 * (cyst_ce_loss + cyst_dice_loss)
-        ) / 6.0
+            2.0 * (multiclass_ce_loss + multiclass_dice_loss)  # Multiclass part.
+            + 4.0 * (tumor_ce_loss + tumor_dice_loss)  # Tumor part.
+            + 1.0 * (cyst_ce_loss + cyst_dice_loss)  # Cyst part.
+        ) / 14.0
 
         # Here is a block of logging code.
         # That is necessary to see the progress of training in tensorboard.
@@ -306,7 +303,7 @@ class DeepLab(L.LightningModule):
             sync_dist=True,
         )
 
-        # Second, additional metrics:
+        # Second, additional matrics:
         #   1. MULTICLASS DICE
         self.log(
             "train_multiclass_dice_loss",
@@ -415,12 +412,12 @@ class DeepLab(L.LightningModule):
 
         # Calculate all losses:
         #   1. Multiclass CE.
-        #   2. Multiclass DiceLoss.
+        #   2. Multicalss DiceLoss.
         #   3. Binary CE for tumors (label == 2).
         #   4. Binary DiceLoss for tumors (label == 2).
         #   5. Binary CE for cysts (label == 3).
         #   6. Binary DiceLoss for cysts (label == 3).
-        # Multiclass case is quite simple. You do not need to change anything.
+        # Multiclass case is quite simple. You do no need to change anything.
         multiclass_ce_loss = self.multiclass_ce_loss_fn(logits, y_true)
         multiclass_dice_loss = self.multiclass_dice_loss_fn(logits, y_true)
 
@@ -430,13 +427,11 @@ class DeepLab(L.LightningModule):
         #       1. Choose y_true where it is 2.
         #       2. Choose the second layer of logits.
         # I do those transforms explicitly. They do not consume much memory.
-        tumor_mask = y_true.where(y_true == 2, torch.tensor(1, dtype=torch.long), torch.tensor(0, dtype=torch.long))
-        cyst_mask = y_true.where(y_true == 3, torch.tensor(1, dtype=torch.long), torch.tensor(0, dtype=torch.long))
-        # tumor_mask = (y_true == 2).long()  # [B, 1, 512, 512]
-        # cyst_mask = (y_true == 3).long()  # [B, 1, 512, 512]
+        tumor_mask = (y_true == 2).long()  # [B, 1, 512, 512]
+        cyst_mask = (y_true == 3).long()  # [B, 1, 512, 512]
 
         # Here you need to use x.unsqueeze(1) to add a dimension.
-        # This it because loss functions need predictions to have shape of [B, C, H, W].
+        # This it beacause loss functions need predictions to have shape of [B, C, H, W].
         tumor_logits = logits[:, 2, :, :].unsqueeze(1)  # [B, 1, 512, 512]
         cyst_logits = logits[:, 3, :, :].unsqueeze(1)  # [B, 1, 512, 512]
 
@@ -448,13 +443,13 @@ class DeepLab(L.LightningModule):
 
         # Calculate total loss for this step.
         # To be honest, I want my loss to be in range [0, 1]. But in this case, I do not do this.
-        # That is because I add coefficients to losses.
+        # That is beacause I add coeeficients to losses.
         # Loss consists of three parts and lies in interval [0, 8]:
         loss = (
-            1.0 * (multiclass_ce_loss + multiclass_dice_loss)
-            + 3.0 * (tumor_ce_loss + tumor_dice_loss)
-            + 2.0 * (cyst_ce_loss + cyst_dice_loss)
-        ) / 6.0
+            2.0 * (multiclass_ce_loss + multiclass_dice_loss)  # Multiclass part.
+            + 4.0 * (tumor_ce_loss + tumor_dice_loss)  # Tumor part.
+            + 1.0 * (cyst_ce_loss + cyst_dice_loss)  # Cyst part.
+        ) / 14.0
 
         # Here is a block of logging code.
         # That is necessary to see the progress of training in tensorboard.
@@ -482,7 +477,7 @@ class DeepLab(L.LightningModule):
             sync_dist=True,
         )
 
-        # Second, additional metrics:
+        # Second, additional matrics:
         #   1. MULTICLASS DICE
         self.log(
             "val_multiclass_dice_loss",
@@ -574,7 +569,7 @@ class DeepLab(L.LightningModule):
             h == 512 and w == 512
         ), f"Assertion: Height and width of an image must both be 512."
 
-        # Calculate logits with forward pass.
+        # Calcuate logits with forward pass.
         # And also calculate the prediction itself.
         logits = self(x)  # [B, 4, 512, 512] -> [B, 4, 512, 512]
         # y_pred = logits.argmax(dim=1)  # [B, 4, 512, 512] -> [B, 1, 512, 512]
@@ -590,7 +585,7 @@ class DeepLab(L.LightningModule):
 
         # Calculate all losses:
         #   1. Multiclass CE.
-        #   2. Multiclass DiceLoss.
+        #   2. Multicalss DiceLoss.
         #   3. Binary CE for tumors (label == 2).
         #   4. Binary DiceLoss for tumors (label == 2).
         #   5. Binary CE for cysts (label == 3).
@@ -604,14 +599,12 @@ class DeepLab(L.LightningModule):
         #   - To choose tumor part:
         #       1. Choose y_true where it is 2.
         #       2. Choose the second layer of logits.
-        # I do those transforms explicitly. They do not consume much memory.
-        tumor_mask = y_true.where(y_true == 2, torch.tensor(1, dtype=torch.long), torch.tensor(0, dtype=torch.long))
-        cyst_mask = y_true.where(y_true == 3, torch.tensor(1, dtype=torch.long), torch.tensor(0, dtype=torch.long))
-        # tumor_mask = (y_true == 2).long()  # [B, 1, 512, 512]
-        # cyst_mask = (y_true == 3).long()  # [B, 1, 512, 512]
+        # I do those transforms explicitly. The do not consume much memory.
+        tumor_mask = (y_true == 2).long()  # [B, 1, 512, 512]
+        cyst_mask = (y_true == 3).long()  # [B, 1, 512, 512]
 
         # Here you need to use x.unsqueeze(1) to add a dimension.
-        # This it because loss functions need predictions to have shape of [B, C, H, W].
+        # This it beacause loss functions need predictions to have shape of [B, C, H, W].
         tumor_logits = logits[:, 2, :, :].unsqueeze(1)  # [B, 1, 512, 512]
         cyst_logits = logits[:, 3, :, :].unsqueeze(1)  # [B, 1, 512, 512]
 
@@ -623,13 +616,13 @@ class DeepLab(L.LightningModule):
 
         # Calculate total loss for this step.
         # To be honest, I want my loss to be in range [0, 1]. But in this case, I do not do this.
-        # That is because I add coefficients to losses.
+        # That is beacause I add coeeficients to losses.
         # Loss consists of three parts and lies in interval [0, 8]:
         loss = (
-            1.0 * (multiclass_ce_loss + multiclass_dice_loss)
-            + 3.0 * (tumor_ce_loss + tumor_dice_loss)
-            + 2.0 * (cyst_ce_loss + cyst_dice_loss)
-        ) / 6.0
+            2.0 * (multiclass_ce_loss + multiclass_dice_loss)  # Multiclass part.
+            + 4.0 * (tumor_ce_loss + tumor_dice_loss)  # Tumor part.
+            + 1.0 * (cyst_ce_loss + cyst_dice_loss)  # Cyst part.
+        ) / 14.0
 
         # Here is a block of logging code.
         # That is necessary to see the progress of training in tensorboard.
@@ -647,17 +640,17 @@ class DeepLab(L.LightningModule):
             sync_dist=True,
         )
         #   2. LEARNING RATE
-        self.log(
-            "test_lr",
-            self.lr_scheduler.get_last_lr()[0],
-            # on_step=True,
-            on_epoch=True,
-            # prog_bar=True,
-            logger=True,
-            sync_dist=True,
-        )
+        # self.log(
+        #     "test_lr",
+        #     self.lr_scheduler.get_last_lr()[0],
+        #     # on_step=True,
+        #     on_epoch=True,
+        #     # prog_bar=True,
+        #     logger=True,
+        #     sync_dist=True,
+        # )
 
-        # Second, additional metrics:
+        # Second, additional matrics:
         #   1. MULTICLASS DICE
         self.log(
             "test_multiclass_dice_loss",
@@ -722,4 +715,4 @@ class DeepLab(L.LightningModule):
         return {"loss": loss}
 
     # Here is a place for a predict_step function.
-    # It is not implemented, because I do not need it in inference, but you can do it yourself if you want.
+    # It is not implemeted, because I do not need it in inference, but you can do it yourself if you want.

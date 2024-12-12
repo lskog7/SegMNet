@@ -1,10 +1,10 @@
-# **SegMNet v0.1**  
+# **SegMNet v0.1.0**
 
-This project is a Python-based web application for processing and segmenting 3D CT scans. Users can upload CT studies in `.tar.gz` format, which are processed by a segmentation model to generate 3D segmentations. Results can be viewed online and downloaded for further use.  
+**SegMNet** is a Python-based web application designed for processing and segmenting 3D CT kidney scans. Users can upload CT studies in `.nii.gz` format, which are processed by a segmentation model to generate 3D segmentations. While future versions aim to support interactive online visualization, the application currently enables downloading processed results for further use.
 
 ---
 
-## **Table of Contents**  
+## **Table of Contents**
 
 1. [Features](#features)  
 2. [Technologies Used](#technologies-used)  
@@ -17,177 +17,163 @@ This project is a Python-based web application for processing and segmenting 3D 
 
 ---
 
-## **Features**  
+## **Features**
 
 - **User Authentication**:  
-  Secure user registration and login using JWT tokens.  
+  Secure user registration and login with JWT-based authentication.
 - **File Upload**:  
-  Upload CT studies in `.tar.gz` format.  
+  Supports `.nii.gz` files for 3D CT scan uploads.
 - **3D Segmentation**:  
-  Integration with a trained segmentation model to generate predictions.  
+  Leverages a trained segmentation model for efficient predictions.
 - **Visualization**:  
-  View segmentation results in an interactive viewer (e.g., Gradio or Streamlit).  
+  (Planned) Interactive visualization using tools like Streamlit.
 - **Download Results**:  
-  Download processed segmentations in NIfTI or other formats.  
+  Export segmentation outputs in NIfTI or compatible formats.
 - **User Settings**:  
-  Modify account details, such as email and password.  
+  Manage account settings, including email and password updates.
 
 ---
 
-## **Technologies Used**  
+## **Technologies Used**
 
-| Component            | Technology/Library           | Purpose                          |  
-|-----------------------|------------------------------|----------------------------------|  
-| **Backend Framework** | FastAPI                     | Web server and API management    |  
-| **Database**          | PostgreSQL + SQLAlchemy     | Data storage and ORM             |  
-| **Authentication**    | Authlib + bcrypt            | User authentication and security |  
-| **Segmentation Model**| PyTorch/TensorFlow          | 3D segmentation                  |  
-| **Visualization**     | Gradio/Streamlit            | Interactive result visualization |  
-| **File Handling**     | tarfile + SimpleITK         | File extraction and preprocessing|  
-| **Deployment**        | Docker + Nginx              | Containerization and serving     |  
+| Component              | Technology/Library  | Purpose                           |  
+|------------------------|---------------------|-----------------------------------|  
+| **Backend Framework**  | FastAPI             | API management and web server     |  
+| **Database**           | SQLite + SQLAlchemy | Data storage and ORM              |  
+| **Authentication**     | Authlib + bcrypt    | User authentication and security  |  
+| **Segmentation Model** | PyTorch             | 3D segmentation model             |  
+| **Visualization**      | Streamlit           | Interactive visualization         |  
+| **File Handling**      | nibabel             | File extraction and preprocessing |  
+| **Deployment**         | Poetry + Docker     | Containerization and serving      |  
 
 ---
 
 ## **Project Structure**
 
-```  
-project_root/  
+```
+SegMNet/
 │  
-├── app/                          # Core application logic  
-│   ├── main.py                   # FastAPI entry point  
-│   ├── config.py                 # Configuration settings  
-│   ├── models/                   # ORM models and segmentation logic  
-│   │   ├── user.py  
-│   │   ├── segmentation.py  
-│   │   └── segmentation_model/   # Segmentation model files  
-│   │       ├── model.pth         # Trained model weights  
-│   │       ├── preprocess.py     # Data preprocessing logic  
-│   │       └── inference.py      # Model inference logic  
-│   ├── routers/                  # API routes  
-│   ├── schemas/                  # Pydantic schemas  
-│   ├── services/                 # Business logic and utilities  
-│   └── static/                   # Static files and visualization tools  
-│  
-├── data/                         # Local data storage  
-│   ├── app.db                    # SQLite database file (for development)  
-│   └── migrations/               # Alembic migration files  
-│  
-├── docker/                       # Docker-related configuration  
-├── tests/                        # Unit and integration tests  
-├── scripts/                      # Helper scripts  
-├── requirements.txt              # Python dependencies  
-├── README.md                     # Project documentation  
-└── .env                          # Environment variables  
-```  
+├── LICENSE                     # License file  
+├── README.md                   # Documentation  
+├── alembic.ini                 # Alembic configuration  
+├── app/                        # Core application logic  
+│   ├── main.py                 # FastAPI entry point  
+│   ├── config.py               # Configuration settings  
+│   ├── routers/                # API route handlers  
+│   ├── models/                 # Data models and segmentation logic  
+│   ├── schemas/                # Pydantic schemas  
+│   ├── services/               # Business logic utilities  
+│   ├── static/                 # Static resources (e.g., visualization)  
+│   ├── templates/              # HTML templates (if applicable)  
+│   └── utils/                  # Helper utilities  
+├── data/                       # Data storage and migrations  
+├── docker/                     # Docker configuration  
+├── requirements.txt            # Python dependencies  
+├── pyproject.toml              # Poetry configuration  
+├── streamlit_app.py            # Visualization interface  
+├── tests/                      # Unit and integration tests  
+└── scripts/                    # Helper scripts  
+```
 
 ---
 
-## **Setup Instructions**  
+## **Setup Instructions**
 
-### Prerequisites  
+### Prerequisites
 
-- Python 3.8 or higher  
-- Docker (recommended for deployment)  
-- PostgreSQL database (if not using Docker Compose)  
+- Python 3.11+  
+- PyTorch 2.4+
+- Poetry  
+- SQLite  
+- CUDA-enabled GPU (optional, for faster inference)  
 
-### Installation Steps  
+### Installation Steps
 
-1. **Clone the Repository**:  
+1. **Install pipx**  
+   Follow the [official pipx documentation](https://pipx.pypa.io/stable/installation/).  
 
+   **MacOS**:  
    ```bash  
-   git clone https://github.com/your-repo-name.git  
-   cd your-repo-name  
+   brew install pipx  
+   pipx ensurepath  
    ```  
 
-2. **Install Dependencies**:  
-
+   **Ubuntu**:  
    ```bash  
-   pip install -r requirements.txt  
+   sudo apt update  
+   sudo apt install pipx  
+   pipx ensurepath  
    ```  
 
-3. **Set Up Environment Variables**:
-   Create a `.env` file based on the `.env.template`:  
-
-   ```  
-   DATABASE_URL=postgresql://username:password@localhost/dbname  
-   SECRET_KEY=your_secret_key  
-   ```  
-
-4. **Run Database Migrations**:  
-
+2. **Install Poetry**  
    ```bash  
-   alembic upgrade head  
+   pipx install poetry  
    ```  
 
-5. **Start the Server**:  
-
+3. **Clone the Repository**  
    ```bash  
-   uvicorn app.main:app --reload  
+   git clone https://github.com/lskog7/SegMNet.git  
+   cd SegMNet  
    ```  
 
-6. **Access the Application**:  
-   Open [http://localhost:8000/docs](http://localhost:8000/docs) to explore the API.  
+4. **Install Dependencies**  
+   ```bash  
+   poetry install  
+   ```  
+
+5. **Set Up Environment Variables**  
+   Create a `.env` file based on `.env.template`.  
+   ```  
+   DB_HOST=1.1.1.1  
+   DB_PORT=1111  
+   DB_NAME=segmnet_db  
+   DB_USER=your_user  
+   DB_PASSWORD=your_password  
+   ```  
+
+6. **Run the Server**  
+   ```bash  
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 1234  
+   ```  
 
 ---
 
-## **Usage Guide**  
+## **Usage Guide**
 
-### 1. **User Registration and Login**  
-
-- Register with your email and password.  
-- Log in to obtain a JWT token for authorization.  
-
-### 2. **Upload CT Study**  
-
-- Upload a `.tar.gz` archive containing the CT scans.  
-
-### 3. **Run Segmentation**  
-
-- The application processes the upload and returns a segmented 3D model.  
-
-### 4. **View and Download Results**  
-
-- Results are visualized in an interactive viewer.  
-- Download the segmented file in your preferred format.  
+1. **Authenticate**: Register and log in to the application.  
+2. **Upload CT Scans**: Use the `/upload` endpoint to upload `.nii.gz` files.  
+3. **Process Scans**: The segmentation model processes uploads to generate results.  
+4. **Download Results**: Export processed files in desired formats.  
 
 ---
 
-## **API Endpoints**  
+## **API Endpoints**
 
-### Authentication  
-
-| Method | Endpoint          | Description         |  
-|--------|--------------------|---------------------|  
-| POST   | `/auth/register`   | Register a new user |  
-| POST   | `/auth/login`      | Log in to the app   |  
-
-### CT Segmentation  
-
-| Method | Endpoint            | Description            |  
-|--------|----------------------|------------------------|  
-| POST   | `/segmentation/upload` | Upload CT study        |  
-| GET    | `/segmentation/view` | View segmentation result |  
-| GET    | `/segmentation/download` | Download result        |  
-
-### User Settings  
-
-| Method | Endpoint          | Description              |  
-|--------|--------------------|--------------------------|  
-| GET    | `/user/settings`   | View user settings       |  
-| PUT    | `/user/settings`   | Update user settings     |  
+| Method | Endpoint         | Description               |  
+|--------|------------------|---------------------------|  
+| POST   | `/auth/register` | Register a new user       |  
+| POST   | `/auth/login`    | Log in to obtain a token  |  
+| POST   | `/upload`        | Upload CT scans           |  
+| GET    | `/result/view`   | (Planned) View results    |  
+| GET    | `/result/download` | Download results        |  
 
 ---
 
-## **Contributing**  
+## **Contributing**
 
-We welcome contributions! Please fork the repository and create a pull request with your changes.  
+We welcome contributions! To contribute:  
+
+1. Fork the repository.  
+2. Create a feature branch.  
+3. Submit a pull request with detailed changes.  
 
 ---
 
-## **License**  
+## **License**
 
 This project is licensed under the [MIT License](LICENSE).  
 
----
+---  
 
-For additional details, templates, or updates, please modify the placeholders in this README after completing the corresponding project sections.
+### **Note**  
+Features and APIs marked as "Planned" are not yet implemented. Updates will be rolled out incrementally.

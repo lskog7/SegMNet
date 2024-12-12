@@ -8,6 +8,11 @@
 .DS_Store
 *.ipynb
 .todo
+**/*.ckpt
+**/.tmp/**
+**/tmp/**
+**/models/**
+**/*.onnx
 
 # User-specific stuff
 .idea/**/workspace.xml

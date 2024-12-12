@@ -2,27 +2,72 @@
 # | PROJECT GLOBAL CONSTANTS |
 # |--------------------------|
 
-# First, import the necessary libraries:
+# |------------------------------------------------------------------|
+# | Description:                                                     |
+# |------------------------------------------------------------------|
+# | Author: Artemiy Tereshchenko                                     |
+# |------------------------------------------------------------------|
+
+# Libraries:
 from pathlib import Path
 from matplotlib.colors import ListedColormap
+import logging
 
-_BASE_PATH_ = Path(__file__).resolve().parents[3]
+# Local modules:
+...
 
-# Model weights and checkpoints paths:
-CHECKPOINT = _BASE_PATH_ / "external_files" / "best_deeplabv3plus_mobilenet_v2_100_32_0.01.ckpt"
-ONNX_MODEL = _BASE_PATH_ / "external_files" / "dlv3p_enb5_76e.onnx"
-TMP_PATH = _BASE_PATH_ / ".app_tmp"
+# Module-specific logging template:
+logging.basicConfig(level=logging.INFO, format="MODULE->[constants.py]: %(message)s")
 
-# Result save path:
-RESULT_PATH = TMP_PATH / "result"
+# Basic directory of the project.
+# In fact, it is just ./SegMNet folder related to your file hierarchy:
+_BASE_DIR_ = Path(__file__).resolve().parents[2]
 
-# Test and example cases paths:
-TEST_NIFTI_IMG = _BASE_PATH_ / "external_files" / "imaging.nii.gz"
-TEST_NIFTI_SEG = _BASE_PATH_ / "external_files" / "segmentation.nii.gz"
+# Temporary path for all files if the app:
+TMP_DIR = _BASE_DIR_ / "tmp"
+
+# Path to the .onnx model file:
+MODELS_DIR = _BASE_DIR_ / "models"
+ONNX_MODEL = MODELS_DIR / "efficientunet.onnx"
+
+# Path to the folder with inputs and outputs:
+INPUT_DIR = TMP_DIR / "input"
+OUTPUT_DIR = TMP_DIR / "output"
 
 # Useful utilities:
+# Color map for matplotlib:
 COLOR_MAP = ListedColormap(["black", "green", "red", "magenta"])
 
+# Make a list of all necessary paths:
+_DIRS_ = [TMP_DIR, MODELS_DIR, INPUT_DIR, OUTPUT_DIR]
+
+# All necessary files must be created during the first start of the app:
+if len(_DIRS_):
+    all_ok = True
+    missing = []
+    for d in _DIRS_:
+        if not d.exists():
+            all_ok = False
+            missing.append(d)
+    if not all_ok:
+        logging.info(">>> SegMNet Builder: Found missing temporary directories. Creating them.")
+        for d in missing:
+            logging.info(f">>> SegMNet Builder: Creating {d}.")
+            try:
+                d.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logging.info(f">>> SegMNet Builder: Creating {d} failed. App building stopped.")
+                raise
+    else:
+        logging.info(">>> SegMNet Builder: All temporary directories found. Continuing building the app.")
+
+# Check if .onnx model file exists:
+if not ONNX_MODEL.exists():
+    logging.info(">>> SegMNet Builder: ONNX model not found. ONNX file must be provided to run app.")
+    raise FileNotFoundError("ONNX model not found. Put a model file to the ./models folder and rerun the app.")
+else:
+    logging.info(">>> SegMNet Builder: ONNX model found. Continuing building the app.")
 
 if __name__ == "__main__":
-    print(_BASE_PATH_)
+    # Just to visualize that path is right if you want:
+    logging.info(_BASE_DIR_)

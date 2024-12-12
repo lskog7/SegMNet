@@ -1,19 +1,21 @@
-from . import constants
-from . import enums
+# |------------------------------------------------------------------|
+# | Description:                                                     |
+# |------------------------------------------------------------------|
+# | Author: Artemiy Tereshchenko                                     |
+# |------------------------------------------------------------------|
 
-from .constants import CHECKPOINT, ONNX_MODEL, TEST_NIFTI_IMG, TEST_NIFTI_SEG, COLOR_MAP, TMP_PATH, RESULT_PATH
-from .enums import UserGenderEnum, UserRoleEnum
+from . import constants
+
+from .constants import _BASE_DIR_, TMP_DIR, MODELS_DIR, ONNX_MODEL, INPUT_DIR, OUTPUT_DIR, COLOR_MAP, _DIRS_
 
 __all__ = [
-    "constants",
-    "CHECKPOINT",
-    "ONNX_MODEL",
-    "TEST_NIFTI_IMG",
-    "TEST_NIFTI_SEG",
-    "COLOR_MAP",
-    "UserGenderEnum",
-    "UserRoleEnum",
-    "enums",
-    "TMP_PATH",
-    "RESULT_PATH"
+    'constants',
+    '_BASE_DIR_',
+    'TMP_DIR',
+    'MODELS_DIR',
+    'ONNX_MODEL',
+    'INPUT_DIR',
+    'OUTPUT_DIR',
+    'COLOR_MAP',
+    '_DIRS_',
 ]

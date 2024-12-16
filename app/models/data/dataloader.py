@@ -22,7 +22,7 @@ from app.constants.constants import TMP_DIR
 from app.models.data.utils import _get_inference_transform_fn, _get_window_fn, _load_nifti
 
 # Module-specific logging template:
-logging.basicConfig(level=logging.INFO, format="MODULE->[dataloader.py]: %(message)s")
+# logging.basicConfig(level=logging.INFO, format="MODULE->[dataloader.py]: %(message)s")
 
 
 # Base dataloader class.

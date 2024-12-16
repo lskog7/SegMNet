@@ -29,7 +29,7 @@ import logging
 ...
 
 # Module-specific logging template:
-logging.basicConfig(level=logging.INFO, format="MODULE->[unet_model.py]: %(message)s")
+# logging.basicConfig(level=logging.INFO, format="MODULE->[unet_model.py]: %(message)s")
 
 class UNet(L.LightningModule):
     # I do not recommend to change any default values.

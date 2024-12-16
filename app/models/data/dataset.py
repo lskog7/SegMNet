@@ -20,7 +20,7 @@ from typing import Tuple
 ...
 
 # Module-specific logging template:
-logging.basicConfig(level=logging.INFO, format="MODULE->[dataset.py]: %(message)s")
+# logging.basicConfig(level=logging.INFO, format="MODULE->[dataset.py]: %(message)s")
 
 
 # Basic class for the KiTS23 Dataset.

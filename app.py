@@ -1,5 +1,5 @@
 # |--------------------------------------------|
-# | MAIN FILE OF A SEGMNET APP BASED ON GRADIO |
+# | MAIN FILE OF A SEGMENT APP BASED ON GRADIO |
 # |--------------------------------------------|
 
 # |------------------------------------------------------------------|
@@ -8,141 +8,127 @@
 # | Author: Artemiy Tereshchenko                                     |
 # |------------------------------------------------------------------|
 
-# Libraries:
 import gradio as gr
 import numpy as np
-import nibabel as nib
-import os
-import uuid  # For generating unique file names
-from matplotlib import pyplot as plt
+import torch
 import logging
-from tqdm import tqdm  # For progress bar
-import shutil
+import cv2
+import segmentation_models_pytorch as smp
+from torchvision.transforms.v2 import functional as F
+from torchvision.transforms import v2 as T
+from pathlib import Path
+from PIL import Image
+import os
 
-# Local modules:
-from app import DataLoader, Inference
-
-# Module-specific logging template:
 logging.basicConfig(level=logging.INFO, format="MODULE->[app.py]: %(message)s")
 
-# Initialize data loader and model inference instances:
-loader = DataLoader()
-model = Inference()
+# Load the segmentation model
+model = smp.Unet(encoder_name="efficientnet-b0", in_channels=1, classes=4)  # Set in_channels to 1 for grayscale
+model.eval()
 
-# Cache for storing processed slices:
-slice_cache = {}
+def predict_one_array(image: np.ndarray) -> np.ndarray:
+    image = cv2.normalize(
+        image, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F
+    )
+    image = torch.tensor(image, dtype=torch.float32).unsqueeze(0)
+    image = F.resize(image, [512, 512], interpolation=T.InterpolationMode.BILINEAR, antialias=True)
+    image = F.normalize(image, mean=[0.5], std=[0.5])  # Adjusted for grayscale
+    with torch.inference_mode():
+        output = model(image)
+    output = (np.argmax(output, axis=1))
+    output = output.squeeze().detach().cpu().numpy()
+    return output
 
+def load_image(image_path: str | Path) -> np.ndarray:
+    image_path = Path(image_path)
+    if image_path.suffix in ['.pt', '.pth']:
+        tensor = torch.load(image_path)
+        return tensor.numpy() if isinstance(tensor, torch.Tensor) else np.array(tensor)
+    elif image_path.suffix == '.npy':
+        return np.load(image_path)
+    elif image_path.suffix == '.npz':
+        data = np.load(image_path)
+        return next(iter(data.values()))
+    elif image_path.suffix in ['.png', '.jpg', '.jpeg', '.webp']:
+        with Image.open(image_path) as img:
+            # Convert to grayscale
+            img = img.convert("L")  # Convert to grayscale
+            return np.array(img)
+    else:
+        raise ValueError(f"Unsupported file format: {image_path.suffix}")
 
-def get_slice(image, seg, axis, index):
-    if image is None or seg is None:
-        return None
+def predict(image_path: str | Path) -> np.ndarray:
+    image = load_image(image_path)
+    assert np.ndim(image) >= 2
+    if np.ndim(image) == 2:
+        image = np.expand_dims(image, axis=0)
+    predictions = []
+    for idx in range(image.shape[0]):
+        img = image[idx: idx + 1]
+        pred = predict_one_array(img)
+        predictions.append(pred)
+    predictions = np.array(predictions)
+    assert len(predictions) > 0
+    if len(predictions) == 1:
+        return predictions[0]
+    else:
+        return predictions
 
-    slice_key = f"{axis}-{index}"
-    if slice_key in slice_cache:
-        return slice_cache[slice_key]
-
-    if axis == "x":
-        img_slice = image[index, :, :]
-        seg_slice = seg[index, :, :]
-    elif axis == "y":
-        img_slice = image[:, index, :]
-        seg_slice = seg[:, index, :]
-    else:  # axis == "z"
-        img_slice = image[:, :, index]
-        seg_slice = seg[:, :, index]
-
-    # Overlay segmentation on image:
-    fig, ax = plt.subplots()
-    ax.imshow(img_slice.T, cmap="gray", origin="lower")
-    ax.imshow(seg_slice.T, cmap="Reds", alpha=0.5, origin="lower")
-    ax.axis("off")
-
-    # Save to buffer:
-    buf = f"slice_{slice_key}.png"
-    plt.savefig(buf, bbox_inches='tight', pad_inches=0)
-    plt.close(fig)
-    slice_cache[slice_key] = buf
-
-    return buf
-
-
-def process_and_predict(nifti_file):
-    segmented_path = os.path.join(loader.tmp_dir, f"segmentation.nii.gz")
-
-    image, affine, base_size = loader.load(nifti_file)
-    image = loader.window(image)
-    image = loader.transform(image)
-
-    predictions = model.predict(image.unsqueeze(1)).astype(np.float32)
-
-    # Save the segmented image as a new NIfTI file
-    segmented_image = nib.Nifti1Image(predictions, affine)
-    nib.save(segmented_image, segmented_path)
-
-    return segmented_path
-
-
-def visualize_slice(segmented_file, axis, index):
-    """
-    Visualize a slice of the segmented image.
-
-    Args:
-        segmented_file (str): Path to the segmented NIfTI file.
-        axis (str): Axis to slice ('x', 'y', 'z').
-        index (int): Index of the slice.
-
-    Returns:
-        str: Path to the PNG image of the slice overlay.
-    """
-    # Load the segmented image:
-    segmented = nib.load(segmented_file).get_fdata()
-
-    # Load the original image:
-    original_file = segmented_file.replace("segmented", "original")
-    original = nib.load(original_file).get_fdata()
-
-    return get_slice(original, segmented, axis, index)
+def save_segmented_image(segmentation: np.ndarray) -> str:
+    # Convert the segmentation output to an image
+    segmented_image = Image.fromarray((segmentation * 255).astype(np.uint8))
+    output_path = "tmp/segmented_image.png"
+    segmented_image.save(output_path)
+    return output_path
 
 
-def download_segmented_file(segmented_file):
-    """
-    Provide the segmented NIfTI file for download.
+def save_full_prediction(prediction: np.ndarray, output_folder: str) -> str:
+    # Ensure the output folder exists
+    os.makedirs(output_folder, exist_ok=True)
 
-    Args:
-        segmented_file (str): Path to the segmented file.
+    if prediction.ndim == 2:
+        # Save as a single PNG if it's a 2D array
+        output_path = os.path.join(output_folder, "segmented_image.png")
+        Image.fromarray((prediction * 255).astype(np.uint8)).save(output_path)
+        return output_path
+    elif prediction.ndim == 3:
+        # Save each slice as a separate PNG
+        for idx in range(prediction.shape[0]):
+            output_path = os.path.join(output_folder, f"segmented_image_{idx}.png")
+            Image.fromarray((prediction[idx] * 255).astype(np.uint8)).save(output_path)
+        return f"Saved {prediction.shape[0]} images to {output_folder}"
+    else:
+        raise ValueError("Prediction must be a 2D or 3D numpy array.")
 
-    Returns:
-        str: Path to the file for download.
-    """
-    return segmented_file
+
+def get_max_sum_slice(prediction: np.ndarray) -> np.ndarray:
+    if prediction.ndim == 2:
+        return prediction
+    max_sum_index = np.argmax(np.sum(prediction==2))  # Sum over height and width
+    return prediction[max_sum_index]
 
 
-# Gradio app interface:
+# Gradio Blocks interface
 with gr.Blocks() as demo:
-    gr.Markdown('# SegMNet: Fast and Precise Kidney Tumor Segmentation')
+    gr.Markdown("## SegMNet: Fast yet precise kidney tumor segmentator")
+    gr.Markdown("Upload an image to see its segmentation and download the segmented image.")
 
     with gr.Row():
-        upload = gr.File(label="Upload .nii.gz File")
-        # segment_btn = gr.Button("Run Segmentation")
-        # axis = gr.Radio(["x", "y", "z"], label="Select Axis", value="z")
-        # index = gr.Slider(minimum=0, maximum=100, step=1, label="Select Slice Index")
+        input_image = gr.Image(type="filepath", label="Input Image")
+        output_image = gr.Image(type="numpy", label="Segmentation")
     with gr.Row():
-        segment_btn = gr.Button("Run Segmentation")
-    with gr.Row():
-        # visualize_btn = gr.Button("Visualize Slice")
-        download_btn = gr.Button("Download Segmented File")
+        save_button = gr.Button("Save Segmentation")
 
-    # output_image = gr.Image(label="Segmented Slice")
-    output_file = gr.File(label="Download .nii.gz")
-    # status_text = gr.Textbox(label="Status", interactive=False)
+    output_file = gr.File(label="Download Segmented Image")
 
-    # Logic:
-    segmented_file = gr.State()
 
-    upload.change(fn=None, inputs=[], outputs=[])  # Remove automatic segmentation on upload
-    segment_btn.click(fn=process_and_predict, inputs=[upload], outputs=[segmented_file])
-    # visualize_btn.click(fn=visualize_slice, inputs=[segmented_file, axis, index], outputs=[output_image])
-    download_btn.click(fn=download_segmented_file, inputs=[segmented_file], outputs=[output_file])
+    def process_image(image_path):
+        prediction = predict(image_path)  # Get the prediction
+        max_slice = get_max_sum_slice(prediction)  # Get the slice with the maximum sum
+        save_full_prediction(prediction, "tmp/segmented_images")  # Save the full prediction
+        return max_slice, save_full_prediction(prediction, "tmp/segmented_images")
+
+
+    input_image.change(process_image, inputs=input_image, outputs=[output_image, output_file])
 
 demo.launch()
-

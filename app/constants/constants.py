@@ -17,7 +17,7 @@ import logging
 ...
 
 # Module-specific logging template:
-logging.basicConfig(level=logging.INFO, format="MODULE->[constants.py]: %(message)s")
+# logging.basicConfig(level=logging.INFO, format="MODULE->[constants.py]: %(message)s")
 
 # Basic directory of the project.
 # In fact, it is just ./SegMNet folder related to your file hierarchy:

@@ -21,7 +21,7 @@ from tqdm import tqdm
 from app.constants.constants import ONNX_MODEL
 
 # Module-specific logging template:
-logging.basicConfig(level=logging.INFO, format="MODULE->[inference.py]: %(message)s")
+# logging.basicConfig(level=logging.INFO, format="MODULE->[inference.py]: %(message)s")
 
 
 # Define base class for segmentation inference in production:

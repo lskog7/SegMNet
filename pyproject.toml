@@ -28,7 +28,7 @@ greenlet = "^3.1.1"
 onnx = "^1.17.0"
 streamlit = "^1.40.2"
 watchdog = "^6.0.0"
-gradio = "^5.8.0"
+gradio = "^5.9.0"
 
 
 [tool.poetry.group.dev.dependencies]

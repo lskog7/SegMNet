@@ -9,9 +9,11 @@
 *.ipynb
 .todo
 **/*.ckpt
-**/.tmp/**
-**/tmp/**
+.tmp
+tmp
 **/*.onnx
+**/*.nii.gz
+/.gradio/
 
 # User-specific stuff
 .idea/**/workspace.xml

@@ -20,7 +20,7 @@ import logging
 ...
 
 # Module-specific logging template:
-logging.basicConfig(level=logging.INFO, format="MODULE->[utils.py]: %(message)s")
+# logging.basicConfig(level=logging.INFO, format="MODULE->[utils.py]: %(message)s")
 
 
 def _check_path(path: str | Path) -> Path:

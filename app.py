@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format="MODULE->[app.py]: %(message)s")
 model = smp.UnetPlusPlus(encoder_name="efficientnet-b0", in_channels=1, classes=4)
 model.load_state_dict({
     ".".join(k.split(".")[1:]): v for k, v in torch.load(
-        "/Users/fffgson/Desktop/Diploma/Code/segment_v0.1/SegMNet/demo/UNetPP_2024-12-16.pth",
+        "demo/UNetPP_2024-12-16.pth",
         weights_only=True
     ).items()
 })
@@ -64,7 +64,7 @@ def predict(image_path: str | Path) -> np.ndarray:
     image = load_image(image_path)
     if np.ndim(image) == 2:  # Single 2D image
         image = np.expand_dims(image, axis=0)  # Add batch dimension
-    predictions = [predict_one_array(image[idx:idx+1]) for idx in range(image.shape[0])]
+    predictions = [predict_one_array(image[idx:idx + 1]) for idx in range(image.shape[0])]
     return np.array(predictions)
 
 

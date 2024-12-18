@@ -14,6 +14,9 @@ tmp
 **/*.onnx
 **/*.nii.gz
 /.gradio/
+models
+output
+**/output/**
 
 # User-specific stuff
 .idea/**/workspace.xml

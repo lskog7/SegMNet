@@ -28,7 +28,6 @@ TMP_DIR = _BASE_DIR_ / "tmp"
 
 # Path to the .onnx model file:
 MODELS_DIR = _BASE_DIR_ / "models"
-ONNX_MODEL = MODELS_DIR / "efficientunet.onnx"
 
 # Path to the folder with inputs and outputs:
 INPUT_DIR = TMP_DIR / "input"
@@ -60,14 +59,3 @@ if len(_DIRS_):
                 raise
     else:
         logging.info(">>> SegMNet Builder: All temporary directories found. Continuing building the app.")
-
-# Check if .onnx model file exists:
-if not ONNX_MODEL.exists():
-    logging.info(">>> SegMNet Builder: ONNX model not found. ONNX file must be provided to run app.")
-    raise FileNotFoundError("ONNX model not found. Put a model file to the ./models folder and rerun the app.")
-else:
-    logging.info(">>> SegMNet Builder: ONNX model found. Continuing building the app.")
-
-if __name__ == "__main__":
-    # Just to visualize that path is right if you want:
-    logging.info(_BASE_DIR_)

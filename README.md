@@ -21,16 +21,10 @@
 
 - **User Authentication**:  
   Secure user registration and login with JWT-based authentication.
-- **File Upload**:  
-  Supports `.nii.gz` files for 3D CT scan uploads.
-- **3D Segmentation**:  
-  Leverages a trained segmentation model for efficient predictions.
 - **Visualization**:  
   (Planned) Interactive visualization using tools like Streamlit.
 - **Download Results**:  
   Export segmentation outputs in NIfTI or compatible formats.
-- **User Settings**:  
-  Manage account settings, including email and password updates.
 
 ---
 

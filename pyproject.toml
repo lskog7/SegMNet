@@ -1,39 +1,28 @@
 [tool.poetry]
 name = "segmnet"
-version = "0.1.0"
-description = "Kidney tumor/cyst segmentator based on DeepLabV3+ and KiTS23 dataset."
-authors = ["Artemiy Tereshchenko (ARTRSHNK)"]
+version = "0.1.1"
+description = "Simple and precise app for kidney tumor segmentation based on UNet++/DeepLabV3+ and trained on KiTS23 dataset."
+authors = ["Artemiy Tereshchenko"]
 license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.11.9"
-fastapi = "^0.115.5"
-uvicorn = "^0.32.1"
+python = ">=3.10"
+numpy = "^2.2.1"
+streamlit = "^1.41.1"
 torch = "^2.5.1"
 torchvision = "^0.20.1"
+opencv-python = "^4.10.0.84"
 segmentation-models-pytorch = "^0.3.4"
-simpleitk = "^2.4.0"
-pandas = "^2.2.3"
-nibabel = "^5.3.2"
-sqlalchemy = "^2.0.36"
-alembic = "^1.14.0"
-pytest = "^8.3.3"
-pydantic-settings = "^2.6.1"
-onnxruntime = "^1.20.1"
-matplotlib = "^3.9.2"
-pytorch-lightning = "^2.4.0"
-asyncpg = "^0.30.0"
-greenlet = "^3.1.1"
-onnx = "^1.17.0"
-streamlit = "^1.40.2"
-watchdog = "^6.0.0"
-gradio = "^5.9.0"
+pillow = "^11.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3.3"
-pytest-asyncio = "^0.24.0"
+lightning = "^2.5.0.post0"
+scikit-learn = "^1.6.0"
+matplotlib = "^3.10.0"
+pandas = "^2.2.3"
+nibabel = "^5.3.2"
 
 [build-system]
 requires = ["poetry-core"]

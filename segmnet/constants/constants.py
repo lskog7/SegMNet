@@ -16,14 +16,11 @@ import logging
 # Local modules:
 ...
 
-# Module-specific logging template:
-# logging.basicConfig(level=logging.INFO, format="MODULE->[constants.py]: %(message)s")
-
 # Basic directory of the project.
 # In fact, it is just ./SegMNet folder related to your file hierarchy:
 _BASE_DIR_ = Path(__file__).resolve().parents[2]
 
-# Temporary path for all files if the app:
+# Temporary path for all files if the segmnet:
 TMP_DIR = _BASE_DIR_ / "tmp"
 
 # Path to the .onnx model file:
@@ -41,7 +38,7 @@ COLOR_MAP = ListedColormap(["black", "green", "red", "magenta"])
 # Make a list of all necessary paths:
 _DIRS_ = [TMP_DIR, MODELS_DIR, INPUT_DIR, OUTPUT_DIR]
 
-# All necessary files must be created during the first start of the app:
+# All necessary files must be created during the first start of the segmnet:
 if len(_DIRS_):
     all_ok = True
     missing = []
@@ -59,14 +56,14 @@ if len(_DIRS_):
                 logging.info(f">>> SegMNet Builder: Creating {d} failed. App building stopped.")
                 raise
     else:
-        logging.info(">>> SegMNet Builder: All temporary directories found. Continuing building the app.")
+        logging.info(">>> SegMNet Builder: All temporary directories found. Continuing building the segmnet.")
 
 # Check if .onnx model file exists:
 if not ONNX_MODEL.exists():
-    logging.info(">>> SegMNet Builder: ONNX model not found. ONNX file must be provided to run app.")
-    raise FileNotFoundError("ONNX model not found. Put a model file to the ./models folder and rerun the app.")
+    logging.info(">>> SegMNet Builder: ONNX model not found. ONNX file must be provided to run segmnet.")
+    raise FileNotFoundError("ONNX model not found. Put a model file to the ./models folder and rerun the segmnet.")
 else:
-    logging.info(">>> SegMNet Builder: ONNX model found. Continuing building the app.")
+    logging.info(">>> SegMNet Builder: ONNX model found. Continuing building the segmnet.")
 
 if __name__ == "__main__":
     # Just to visualize that path is right if you want:

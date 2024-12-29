@@ -67,7 +67,7 @@
    
 3. **Run the Server**  
    ```bash  
-   gradio app.py
+   gradio segmnet.py
    ```  
 
 ---
